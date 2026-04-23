@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Types } from "mongoose";
 import { connectToDatabase } from "@/lib/mongodb";
+import { authenticateRequest } from "@/middleware/auth.middleware";
 import {
   createCaregiverProfile,
   isValidCaregiverStatus,
@@ -8,7 +9,6 @@ import {
 } from "@/services/caregiver.service";
 
 interface CreateCaregiverRequestBody {
-  userId?: string;
   qualifications?: string;
   serviceAreas?: string[];
   rating?: number;
@@ -45,6 +45,22 @@ export async function listCaregiversController() {
 }
 
 export async function createCaregiverController(request: Request) {
+  const authResult = authenticateRequest(request, ["caregiver"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
   let body: CreateCaregiverRequestBody;
 
   try {
@@ -59,18 +75,18 @@ export async function createCaregiverController(request: Request) {
     );
   }
 
-  const userId = body.userId?.trim();
+  const userId = authResult.auth.sub;
   const qualifications = body.qualifications?.trim();
   const serviceAreas = body.serviceAreas;
   const rating = body.rating;
   const isAvailable = body.isAvailable;
   const verificationStatus = body.verificationStatus?.trim();
 
-  if (!userId || !qualifications || !serviceAreas) {
+  if (!qualifications || !serviceAreas) {
     return NextResponse.json(
       {
         success: false,
-        message: "userId, qualifications, and serviceAreas are required",
+        message: "qualifications and serviceAreas are required",
       },
       { status: 400 }
     );
