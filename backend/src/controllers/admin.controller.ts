@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { authenticateRequest } from "@/middleware/auth.middleware";
+import { listUsersForAdmin } from "@/services/admin.service";
 import {
   isValidCaregiverStatus,
   listCaregiversByVerificationStatus,
@@ -154,6 +155,50 @@ export async function listPendingCaregiversController(request: Request) {
       {
         success: false,
         message: "Failed to fetch pending caregivers",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function listUsersController(request: Request) {
+  const authResult = authenticateRequest(request, ["admin"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const users = await listUsersForAdmin();
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Users fetched successfully",
+        data: users,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch users",
         error: message,
       },
       { status: 500 }
