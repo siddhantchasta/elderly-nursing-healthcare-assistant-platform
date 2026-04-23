@@ -19,6 +19,26 @@ export interface CreatedService {
   requiredQualification: string;
 }
 
+export interface UpdateServiceInput {
+  serviceId: string;
+  category?: ServiceCategory;
+  serviceName?: string;
+  description?: string;
+  duration?: string;
+  price?: number;
+  requiredQualification?: string;
+}
+
+export interface UpdatedService {
+  id: string;
+  category: ServiceCategory;
+  serviceName: string;
+  description: string;
+  duration: string;
+  price: number;
+  requiredQualification: string;
+}
+
 export interface ServiceListItem {
   id: string;
   category: string;
@@ -65,5 +85,49 @@ export async function createService(input: CreateServiceInput): Promise<CreatedS
     duration: createdService.duration,
     price: createdService.price,
     requiredQualification: createdService.requiredQualification,
+  };
+}
+
+export async function updateService(input: UpdateServiceInput): Promise<UpdatedService> {
+  const service = await Service.findById(input.serviceId);
+
+  if (!service) {
+    throw new Error("SERVICE_NOT_FOUND");
+  }
+
+  if (input.category !== undefined) {
+    service.category = input.category;
+  }
+
+  if (input.serviceName !== undefined) {
+    service.serviceName = input.serviceName;
+  }
+
+  if (input.description !== undefined) {
+    service.description = input.description;
+  }
+
+  if (input.duration !== undefined) {
+    service.duration = input.duration;
+  }
+
+  if (input.price !== undefined) {
+    service.price = input.price;
+  }
+
+  if (input.requiredQualification !== undefined) {
+    service.requiredQualification = input.requiredQualification;
+  }
+
+  await service.save();
+
+  return {
+    id: service._id.toString(),
+    category: service.category,
+    serviceName: service.serviceName,
+    description: service.description,
+    duration: service.duration,
+    price: service.price,
+    requiredQualification: service.requiredQualification,
   };
 }
