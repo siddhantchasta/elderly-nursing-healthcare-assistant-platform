@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { authenticateRequest } from "@/middleware/auth.middleware";
-import { listUsersForAdmin } from "@/services/admin.service";
+import { getAdminKpiSummary, listUsersForAdmin } from "@/services/admin.service";
 import {
   isValidCaregiverStatus,
   listCaregiversByVerificationStatus,
@@ -199,6 +199,50 @@ export async function listUsersController(request: Request) {
       {
         success: false,
         message: "Failed to fetch users",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function getKpiSummaryController(request: Request) {
+  const authResult = authenticateRequest(request, ["admin"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const kpis = await getAdminKpiSummary();
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "KPI summary fetched successfully",
+        data: kpis,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch KPI summary",
         error: message,
       },
       { status: 500 }
