@@ -5,6 +5,7 @@ import {
   isValidBookingDecision,
   isValidBookingType,
   isValidObjectId,
+  listBookingHistory,
   updateBookingDecision,
 } from "@/services/booking.service";
 
@@ -247,6 +248,71 @@ export async function updateBookingDecisionController(request: Request) {
       {
         success: false,
         message: "Failed to update booking decision",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function listBookingHistoryController(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const userId = searchParams.get("userId")?.trim();
+  const caregiverId = searchParams.get("caregiverId")?.trim();
+
+  if (!userId && !caregiverId) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "userId or caregiverId query parameter is required",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (userId && !isValidObjectId(userId)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "userId must be a valid ObjectId",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (caregiverId && !isValidObjectId(caregiverId)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "caregiverId must be a valid ObjectId",
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const bookings = await listBookingHistory({
+      userId,
+      caregiverId,
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Booking history fetched successfully",
+        data: bookings,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch booking history",
         error: message,
       },
       { status: 500 }
