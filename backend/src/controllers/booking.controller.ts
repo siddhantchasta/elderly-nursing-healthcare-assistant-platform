@@ -12,7 +12,6 @@ import {
 } from "@/services/booking.service";
 
 interface CreateBookingRequestBody {
-  userId?: string;
   patientId?: string;
   caregiverId?: string;
   serviceId?: string;
@@ -26,6 +25,22 @@ interface UpdateBookingDecisionRequestBody {
 }
 
 export async function createBookingController(request: Request) {
+  const authResult = authenticateRequest(request, ["user"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
   let body: CreateBookingRequestBody;
 
   try {
@@ -40,19 +55,18 @@ export async function createBookingController(request: Request) {
     );
   }
 
-  const userId = body.userId?.trim();
+  const userId = authResult.auth.sub;
   const patientId = body.patientId?.trim();
   const caregiverId = body.caregiverId?.trim();
   const serviceId = body.serviceId?.trim();
   const bookingType = body.bookingType?.trim();
   const scheduledAt = body.scheduledAt?.trim();
 
-  if (!userId || !patientId || !caregiverId || !serviceId || !bookingType || !scheduledAt) {
+  if (!patientId || !caregiverId || !serviceId || !bookingType || !scheduledAt) {
     return NextResponse.json(
       {
         success: false,
-        message:
-          "userId, patientId, caregiverId, serviceId, bookingType, and scheduledAt are required",
+        message: "patientId, caregiverId, serviceId, bookingType, and scheduledAt are required",
       },
       { status: 400 }
     );
