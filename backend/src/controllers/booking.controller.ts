@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
+import Caregiver from "@/models/Caregiver";
+import { authenticateRequest } from "@/middleware/auth.middleware";
 import {
   createBookingRequest,
   isValidBookingDecision,
@@ -20,7 +22,6 @@ interface CreateBookingRequestBody {
 
 interface UpdateBookingDecisionRequestBody {
   bookingId?: string;
-  caregiverId?: string;
   decision?: string;
 }
 
@@ -154,6 +155,22 @@ export async function createBookingController(request: Request) {
 }
 
 export async function updateBookingDecisionController(request: Request) {
+  const authResult = authenticateRequest(request, ["caregiver"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
   let body: UpdateBookingDecisionRequestBody;
 
   try {
@@ -169,24 +186,23 @@ export async function updateBookingDecisionController(request: Request) {
   }
 
   const bookingId = body.bookingId?.trim();
-  const caregiverId = body.caregiverId?.trim();
   const decision = body.decision?.trim();
 
-  if (!bookingId || !caregiverId || !decision) {
+  if (!bookingId || !decision) {
     return NextResponse.json(
       {
         success: false,
-        message: "bookingId, caregiverId, and decision are required",
+        message: "bookingId and decision are required",
       },
       { status: 400 }
     );
   }
 
-  if (!isValidObjectId(bookingId) || !isValidObjectId(caregiverId)) {
+  if (!isValidObjectId(bookingId)) {
     return NextResponse.json(
       {
         success: false,
-        message: "bookingId and caregiverId must be valid ObjectId values",
+        message: "bookingId must be a valid ObjectId value",
       },
       { status: 400 }
     );
@@ -205,9 +221,21 @@ export async function updateBookingDecisionController(request: Request) {
   try {
     await connectToDatabase();
 
+    const caregiverProfile = await Caregiver.findOne({ userId: authResult.auth.sub }).lean();
+
+    if (!caregiverProfile) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "CAREGIVER_PROFILE_NOT_FOUND",
+        },
+        { status: 404 }
+      );
+    }
+
     const updatedBooking = await updateBookingDecision({
       bookingId,
-      caregiverId,
+      caregiverId: caregiverProfile._id.toString(),
       decision,
     });
 
