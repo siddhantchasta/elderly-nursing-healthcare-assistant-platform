@@ -41,6 +41,21 @@ export interface UpdatedBookingDecision {
   statusUpdatedAt: Date;
 }
 
+export const BOOKING_TRACKING_STATUSES = ["in_progress", "completed"] as const;
+export type BookingTrackingStatus = (typeof BOOKING_TRACKING_STATUSES)[number];
+
+export interface UpdateBookingStatusInput {
+  bookingId: string;
+  caregiverId: string;
+  status: BookingTrackingStatus;
+}
+
+export interface UpdatedBookingStatus {
+  id: string;
+  status: BookingStatus;
+  statusUpdatedAt: Date;
+}
+
 export interface BookingHistoryQuery {
   userId?: string;
   caregiverId?: string;
@@ -64,6 +79,10 @@ export function isValidBookingType(bookingType: string): bookingType is BookingT
 
 export function isValidBookingDecision(decision: string): decision is BookingDecision {
   return BOOKING_DECISIONS.includes(decision as BookingDecision);
+}
+
+export function isValidBookingTrackingStatus(status: string): status is BookingTrackingStatus {
+  return BOOKING_TRACKING_STATUSES.includes(status as BookingTrackingStatus);
 }
 
 export function isValidBookingStatus(status: string): status is BookingStatus {
@@ -156,6 +175,39 @@ export async function updateBookingDecision(
   }
 
   booking.status = input.decision;
+  booking.statusUpdatedAt = new Date();
+
+  await booking.save();
+
+  return {
+    id: booking._id.toString(),
+    status: booking.status,
+    statusUpdatedAt: booking.statusUpdatedAt,
+  };
+}
+
+export async function updateBookingStatus(
+  input: UpdateBookingStatusInput
+): Promise<UpdatedBookingStatus> {
+  const booking = await Booking.findById(input.bookingId);
+
+  if (!booking) {
+    throw new Error("BOOKING_NOT_FOUND");
+  }
+
+  if (booking.caregiverId.toString() !== input.caregiverId) {
+    throw new Error("BOOKING_CAREGIVER_MISMATCH");
+  }
+
+  if (input.status === "in_progress" && booking.status !== "accepted") {
+    throw new Error("INVALID_STATUS_TRANSITION");
+  }
+
+  if (input.status === "completed" && booking.status !== "in_progress") {
+    throw new Error("INVALID_STATUS_TRANSITION");
+  }
+
+  booking.status = input.status;
   booking.statusUpdatedAt = new Date();
 
   await booking.save();

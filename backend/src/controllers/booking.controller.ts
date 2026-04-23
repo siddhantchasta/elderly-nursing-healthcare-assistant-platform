@@ -5,10 +5,12 @@ import { authenticateRequest } from "@/middleware/auth.middleware";
 import {
   createBookingRequest,
   isValidBookingDecision,
+  isValidBookingTrackingStatus,
   isValidBookingType,
   isValidObjectId,
   listBookingHistory,
   updateBookingDecision,
+  updateBookingStatus,
 } from "@/services/booking.service";
 
 interface CreateBookingRequestBody {
@@ -22,6 +24,11 @@ interface CreateBookingRequestBody {
 interface UpdateBookingDecisionRequestBody {
   bookingId?: string;
   decision?: string;
+}
+
+interface UpdateBookingStatusRequestBody {
+  bookingId?: string;
+  status?: string;
 }
 
 export async function createBookingController(request: Request) {
@@ -360,6 +367,135 @@ export async function listBookingHistoryController(request: Request) {
       {
         success: false,
         message: "Failed to fetch booking history",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function updateBookingStatusController(request: Request) {
+  const authResult = authenticateRequest(request, ["caregiver"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
+  let body: UpdateBookingStatusRequestBody;
+
+  try {
+    body = (await request.json()) as UpdateBookingStatusRequestBody;
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid JSON payload",
+      },
+      { status: 400 }
+    );
+  }
+
+  const bookingId = body.bookingId?.trim();
+  const status = body.status?.trim();
+
+  if (!bookingId || !status) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "bookingId and status are required",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (!isValidObjectId(bookingId)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "bookingId must be a valid ObjectId",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (!isValidBookingTrackingStatus(status)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "status must be in_progress or completed",
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const caregiverProfile = await Caregiver.findOne({ userId: authResult.auth.sub }).lean();
+
+    if (!caregiverProfile) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "CAREGIVER_PROFILE_NOT_FOUND",
+        },
+        { status: 404 }
+      );
+    }
+
+    const updatedBooking = await updateBookingStatus({
+      bookingId,
+      caregiverId: caregiverProfile._id.toString(),
+      status,
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Booking status updated successfully",
+        data: updatedBooking,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "BOOKING_NOT_FOUND") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "BOOKING_NOT_FOUND",
+          },
+          { status: 404 }
+        );
+      }
+
+      if (error.message === "BOOKING_CAREGIVER_MISMATCH" || error.message === "INVALID_STATUS_TRANSITION") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: error.message,
+          },
+          { status: 409 }
+        );
+      }
+    }
+
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to update booking status",
         error: message,
       },
       { status: 500 }
