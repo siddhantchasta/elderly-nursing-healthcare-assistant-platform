@@ -24,6 +24,16 @@ export interface CreatedCaregiver {
   verificationStatus: CaregiverCreateStatus;
 }
 
+export interface UpdateCaregiverVerificationInput {
+  caregiverId: string;
+  verificationStatus: CaregiverCreateStatus;
+}
+
+export interface UpdatedCaregiverVerification {
+  id: string;
+  verificationStatus: CaregiverCreateStatus;
+}
+
 export interface CaregiverListItem {
   id: string;
   userId: string;
@@ -87,5 +97,23 @@ export async function createCaregiverProfile(input: CreateCaregiverInput): Promi
     isAvailable: createdCaregiver.isAvailable,
     serviceAreas: createdCaregiver.serviceAreas,
     verificationStatus: createdCaregiver.verificationStatus,
+  };
+}
+
+export async function updateCaregiverVerificationStatus(
+  input: UpdateCaregiverVerificationInput
+): Promise<UpdatedCaregiverVerification> {
+  const caregiver = await Caregiver.findById(input.caregiverId);
+
+  if (!caregiver) {
+    throw new Error("CAREGIVER_NOT_FOUND");
+  }
+
+  caregiver.verificationStatus = input.verificationStatus;
+  await caregiver.save();
+
+  return {
+    id: caregiver._id.toString(),
+    verificationStatus: caregiver.verificationStatus,
   };
 }
