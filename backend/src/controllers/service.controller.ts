@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
+import { authenticateRequest } from "@/middleware/auth.middleware";
 import { createService, isValidServiceCategory, listServices } from "@/services/service.service";
 
 interface CreateServiceRequestBody {
@@ -40,6 +41,22 @@ export async function listServicesController() {
 }
 
 export async function createServiceController(request: Request) {
+  const authResult = authenticateRequest(request, ["admin"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
   let body: CreateServiceRequestBody;
 
   try {
