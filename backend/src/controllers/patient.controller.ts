@@ -1,15 +1,31 @@
 import { NextResponse } from "next/server";
 import { Types } from "mongoose";
 import { connectToDatabase } from "@/lib/mongodb";
+import { authenticateRequest } from "@/middleware/auth.middleware";
 import { createPatientProfile } from "@/services/patient.service";
 
 interface CreatePatientRequestBody {
-  userId?: string;
   age?: number;
   medicalNeeds?: string;
 }
 
 export async function createPatientController(request: Request) {
+  const authResult = authenticateRequest(request, ["user"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
   let body: CreatePatientRequestBody;
 
   try {
@@ -24,15 +40,15 @@ export async function createPatientController(request: Request) {
     );
   }
 
-  const userId = body.userId?.trim();
+  const userId = authResult.auth.sub;
   const medicalNeeds = body.medicalNeeds?.trim();
   const age = body.age;
 
-  if (!userId || age === undefined || !medicalNeeds) {
+  if (age === undefined || !medicalNeeds) {
     return NextResponse.json(
       {
         success: false,
-        message: "userId, age, and medicalNeeds are required",
+        message: "age and medicalNeeds are required",
       },
       { status: 400 }
     );
