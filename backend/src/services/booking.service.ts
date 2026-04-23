@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import Booking, { BOOKING_TYPES, BookingType } from "@/models/Booking";
+import Booking, { BOOKING_TYPES, BOOKING_STATUSES, BookingStatus, BookingType } from "@/models/Booking";
 import Caregiver from "@/models/Caregiver";
 import Patient from "@/models/Patient";
 import Service from "@/models/Service";
@@ -26,8 +26,31 @@ export interface CreatedBooking {
   statusUpdatedAt: Date;
 }
 
+export const BOOKING_DECISIONS = ["accepted", "rejected"] as const;
+export type BookingDecision = (typeof BOOKING_DECISIONS)[number];
+
+export interface UpdateBookingDecisionInput {
+  bookingId: string;
+  caregiverId: string;
+  decision: BookingDecision;
+}
+
+export interface UpdatedBookingDecision {
+  id: string;
+  status: BookingStatus;
+  statusUpdatedAt: Date;
+}
+
 export function isValidBookingType(bookingType: string): bookingType is BookingType {
   return BOOKING_TYPES.includes(bookingType as BookingType);
+}
+
+export function isValidBookingDecision(decision: string): decision is BookingDecision {
+  return BOOKING_DECISIONS.includes(decision as BookingDecision);
+}
+
+export function isValidBookingStatus(status: string): status is BookingStatus {
+  return BOOKING_STATUSES.includes(status as BookingStatus);
 }
 
 export function isValidObjectId(id: string): boolean {
@@ -95,5 +118,34 @@ export async function createBookingRequest(input: CreateBookingInput): Promise<C
     status: "pending",
     scheduledAt: createdBooking.scheduledAt,
     statusUpdatedAt: createdBooking.statusUpdatedAt,
+  };
+}
+
+export async function updateBookingDecision(
+  input: UpdateBookingDecisionInput
+): Promise<UpdatedBookingDecision> {
+  const booking = await Booking.findById(input.bookingId);
+
+  if (!booking) {
+    throw new Error("BOOKING_NOT_FOUND");
+  }
+
+  if (booking.caregiverId.toString() !== input.caregiverId) {
+    throw new Error("BOOKING_CAREGIVER_MISMATCH");
+  }
+
+  if (booking.status !== "pending") {
+    throw new Error("BOOKING_NOT_PENDING");
+  }
+
+  booking.status = input.decision;
+  booking.statusUpdatedAt = new Date();
+
+  await booking.save();
+
+  return {
+    id: booking._id.toString(),
+    status: booking.status,
+    statusUpdatedAt: booking.statusUpdatedAt,
   };
 }

@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import {
   createBookingRequest,
+  isValidBookingDecision,
   isValidBookingType,
   isValidObjectId,
+  updateBookingDecision,
 } from "@/services/booking.service";
 
 interface CreateBookingRequestBody {
@@ -13,6 +15,12 @@ interface CreateBookingRequestBody {
   serviceId?: string;
   bookingType?: string;
   scheduledAt?: string;
+}
+
+interface UpdateBookingDecisionRequestBody {
+  bookingId?: string;
+  caregiverId?: string;
+  decision?: string;
 }
 
 export async function createBookingController(request: Request) {
@@ -137,6 +145,108 @@ export async function createBookingController(request: Request) {
       {
         success: false,
         message: "Failed to create booking request",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function updateBookingDecisionController(request: Request) {
+  let body: UpdateBookingDecisionRequestBody;
+
+  try {
+    body = (await request.json()) as UpdateBookingDecisionRequestBody;
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid JSON payload",
+      },
+      { status: 400 }
+    );
+  }
+
+  const bookingId = body.bookingId?.trim();
+  const caregiverId = body.caregiverId?.trim();
+  const decision = body.decision?.trim();
+
+  if (!bookingId || !caregiverId || !decision) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "bookingId, caregiverId, and decision are required",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (!isValidObjectId(bookingId) || !isValidObjectId(caregiverId)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "bookingId and caregiverId must be valid ObjectId values",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (!isValidBookingDecision(decision)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "decision must be accepted or rejected",
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const updatedBooking = await updateBookingDecision({
+      bookingId,
+      caregiverId,
+      decision,
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Booking decision updated successfully",
+        data: updatedBooking,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "BOOKING_NOT_FOUND") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "BOOKING_NOT_FOUND",
+          },
+          { status: 404 }
+        );
+      }
+
+      if (error.message === "BOOKING_CAREGIVER_MISMATCH" || error.message === "BOOKING_NOT_PENDING") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: error.message,
+          },
+          { status: 409 }
+        );
+      }
+    }
+
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to update booking decision",
         error: message,
       },
       { status: 500 }
