@@ -1,4 +1,23 @@
-import Service from "@/models/Service";
+import Service, { SERVICE_CATEGORIES, ServiceCategory } from "@/models/Service";
+
+export interface CreateServiceInput {
+  category: ServiceCategory;
+  serviceName: string;
+  description: string;
+  duration: string;
+  price: number;
+  requiredQualification: string;
+}
+
+export interface CreatedService {
+  id: string;
+  category: ServiceCategory;
+  serviceName: string;
+  description: string;
+  duration: string;
+  price: number;
+  requiredQualification: string;
+}
 
 export interface ServiceListItem {
   id: string;
@@ -8,6 +27,10 @@ export interface ServiceListItem {
   duration: string;
   price: number;
   requiredQualification: string;
+}
+
+export function isValidServiceCategory(category: string): category is ServiceCategory {
+  return SERVICE_CATEGORIES.includes(category as ServiceCategory);
 }
 
 export async function listServices(): Promise<ServiceListItem[]> {
@@ -22,4 +45,25 @@ export async function listServices(): Promise<ServiceListItem[]> {
     price: service.price,
     requiredQualification: service.requiredQualification,
   }));
+}
+
+export async function createService(input: CreateServiceInput): Promise<CreatedService> {
+  const createdService = await Service.create({
+    category: input.category,
+    serviceName: input.serviceName,
+    description: input.description,
+    duration: input.duration,
+    price: input.price,
+    requiredQualification: input.requiredQualification,
+  });
+
+  return {
+    id: createdService._id.toString(),
+    category: createdService.category,
+    serviceName: createdService.serviceName,
+    description: createdService.description,
+    duration: createdService.duration,
+    price: createdService.price,
+    requiredQualification: createdService.requiredQualification,
+  };
 }

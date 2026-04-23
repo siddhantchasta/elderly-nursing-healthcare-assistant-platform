@@ -1,0 +1,99 @@
+import { Types } from "mongoose";
+import Booking, { BOOKING_TYPES, BookingType } from "@/models/Booking";
+import Caregiver from "@/models/Caregiver";
+import Patient from "@/models/Patient";
+import Service from "@/models/Service";
+import User from "@/models/User";
+
+export interface CreateBookingInput {
+  userId: string;
+  patientId: string;
+  caregiverId: string;
+  serviceId: string;
+  bookingType: BookingType;
+  scheduledAt: string;
+}
+
+export interface CreatedBooking {
+  id: string;
+  userId: string;
+  patientId: string;
+  caregiverId: string;
+  serviceId: string;
+  bookingType: BookingType;
+  status: "pending";
+  scheduledAt: Date;
+  statusUpdatedAt: Date;
+}
+
+export function isValidBookingType(bookingType: string): bookingType is BookingType {
+  return BOOKING_TYPES.includes(bookingType as BookingType);
+}
+
+export function isValidObjectId(id: string): boolean {
+  return Types.ObjectId.isValid(id);
+}
+
+export async function createBookingRequest(input: CreateBookingInput): Promise<CreatedBooking> {
+  const [user, patient, caregiver, service] = await Promise.all([
+    User.findById(input.userId).lean(),
+    Patient.findById(input.patientId).lean(),
+    Caregiver.findById(input.caregiverId).lean(),
+    Service.findById(input.serviceId).lean(),
+  ]);
+
+  if (!user) {
+    throw new Error("USER_NOT_FOUND");
+  }
+
+  if (!patient) {
+    throw new Error("PATIENT_NOT_FOUND");
+  }
+
+  if (patient.userId.toString() !== input.userId) {
+    throw new Error("PATIENT_ACCESS_DENIED");
+  }
+
+  if (!caregiver) {
+    throw new Error("CAREGIVER_NOT_FOUND");
+  }
+
+  if (caregiver.verificationStatus !== "verified" || !caregiver.isAvailable) {
+    throw new Error("CAREGIVER_NOT_AVAILABLE");
+  }
+
+  if (!service) {
+    throw new Error("SERVICE_NOT_FOUND");
+  }
+
+  const scheduledAtDate = new Date(input.scheduledAt);
+
+  if (Number.isNaN(scheduledAtDate.getTime())) {
+    throw new Error("INVALID_SCHEDULED_AT");
+  }
+
+  const now = new Date();
+
+  const createdBooking = await Booking.create({
+    userId: input.userId,
+    patientId: input.patientId,
+    caregiverId: input.caregiverId,
+    serviceId: input.serviceId,
+    bookingType: input.bookingType,
+    status: "pending",
+    scheduledAt: scheduledAtDate,
+    statusUpdatedAt: now,
+  });
+
+  return {
+    id: createdBooking._id.toString(),
+    userId: createdBooking.userId.toString(),
+    patientId: createdBooking.patientId.toString(),
+    caregiverId: createdBooking.caregiverId.toString(),
+    serviceId: createdBooking.serviceId.toString(),
+    bookingType: createdBooking.bookingType,
+    status: "pending",
+    scheduledAt: createdBooking.scheduledAt,
+    statusUpdatedAt: createdBooking.statusUpdatedAt,
+  };
+}
