@@ -15,6 +15,14 @@ export interface CreatedCareNote {
   createdAt: Date;
 }
 
+export interface CareNoteListItem {
+  id: string;
+  bookingId: string;
+  caregiverId: string;
+  note: string;
+  createdAt: Date;
+}
+
 export async function createCareNote(input: CreateCareNoteInput): Promise<CreatedCareNote> {
   const booking = await Booking.findById(input.bookingId).lean();
 
@@ -43,4 +51,16 @@ export async function createCareNote(input: CreateCareNoteInput): Promise<Create
     note: createdNote.note,
     createdAt: createdNote.createdAt,
   };
+}
+
+export async function listCareNotesByBooking(bookingId: string): Promise<CareNoteListItem[]> {
+  const notes = await CareNote.find({ bookingId }).sort({ createdAt: 1 }).lean();
+
+  return notes.map((note) => ({
+    id: note._id.toString(),
+    bookingId: note.bookingId.toString(),
+    caregiverId: note.caregiverId.toString(),
+    note: note.note,
+    createdAt: note.createdAt,
+  }));
 }
