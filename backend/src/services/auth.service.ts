@@ -1,5 +1,5 @@
 import User, { UserRole } from "@/models/User";
-import { hashPassword } from "@/lib/auth";
+import { hashPassword, signAuthToken, verifyPassword } from "@/lib/auth";
 
 export const REGISTERABLE_ROLES = ["user", "caregiver"] as const;
 
@@ -15,6 +15,16 @@ export interface RegisteredUser {
   id: string;
   email: string;
   role: UserRole;
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export interface AuthenticatedUser {
+  token: string;
+  user: RegisteredUser;
 }
 
 export async function registerAccount(input: RegisterInput): Promise<RegisteredUser> {
@@ -36,5 +46,33 @@ export async function registerAccount(input: RegisterInput): Promise<RegisteredU
     id: createdUser._id.toString(),
     email: createdUser.email,
     role: createdUser.role,
+  };
+}
+
+export async function loginAccount(input: LoginInput): Promise<AuthenticatedUser> {
+  const user = await User.findOne({ email: input.email.toLowerCase() }).select("+passwordHash");
+
+  if (!user || !user.passwordHash) {
+    throw new Error("INVALID_CREDENTIALS");
+  }
+
+  const isPasswordValid = await verifyPassword(input.password, user.passwordHash);
+
+  if (!isPasswordValid) {
+    throw new Error("INVALID_CREDENTIALS");
+  }
+
+  const token = signAuthToken({
+    sub: user._id.toString(),
+    role: user.role,
+  });
+
+  return {
+    token,
+    user: {
+      id: user._id.toString(),
+      email: user.email,
+      role: user.role,
+    },
   };
 }

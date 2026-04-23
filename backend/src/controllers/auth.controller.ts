@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import { REGISTERABLE_ROLES, RegisterableRole, registerAccount } from "@/services/auth.service";
+import { REGISTERABLE_ROLES, RegisterableRole, loginAccount, registerAccount } from "@/services/auth.service";
 
 interface RegisterRequestBody {
   email?: string;
   password?: string;
   role?: string;
+}
+
+interface LoginRequestBody {
+  email?: string;
+  password?: string;
 }
 
 function isValidEmail(email: string): boolean {
@@ -99,6 +104,84 @@ export async function registerController(request: Request) {
       {
         success: false,
         message: "Registration failed",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function loginController(request: Request) {
+  let body: LoginRequestBody;
+
+  try {
+    body = (await request.json()) as LoginRequestBody;
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid JSON payload",
+      },
+      { status: 400 }
+    );
+  }
+
+  const email = body.email?.trim();
+  const password = body.password;
+
+  if (!email || !password) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "email and password are required",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (!isValidEmail(email)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid email format",
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const authenticatedUser = await loginAccount({
+      email,
+      password,
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Login successful",
+        data: authenticatedUser,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message === "INVALID_CREDENTIALS") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid email or password",
+        },
+        { status: 401 }
+      );
+    }
+
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Login failed",
         error: message,
       },
       { status: 500 }
