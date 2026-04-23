@@ -298,42 +298,47 @@ export async function updateBookingDecisionController(request: Request) {
 }
 
 export async function listBookingHistoryController(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const userId = searchParams.get("userId")?.trim();
-  const caregiverId = searchParams.get("caregiverId")?.trim();
+  const authResult = authenticateRequest(request, ["user", "caregiver"]);
 
-  if (!userId && !caregiverId) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "userId or caregiverId query parameter is required",
-      },
-      { status: 400 }
-    );
+  if (authResult.response) {
+    return authResult.response;
   }
 
-  if (userId && !isValidObjectId(userId)) {
+  if (!authResult.auth) {
     return NextResponse.json(
       {
         success: false,
-        message: "userId must be a valid ObjectId",
+        message: "Unauthorized",
       },
-      { status: 400 }
-    );
-  }
-
-  if (caregiverId && !isValidObjectId(caregiverId)) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "caregiverId must be a valid ObjectId",
-      },
-      { status: 400 }
+      { status: 401 }
     );
   }
 
   try {
     await connectToDatabase();
+
+    let userId: string | undefined;
+    let caregiverId: string | undefined;
+
+    if (authResult.auth.role === "user") {
+      userId = authResult.auth.sub;
+    }
+
+    if (authResult.auth.role === "caregiver") {
+      const caregiverProfile = await Caregiver.findOne({ userId: authResult.auth.sub }).lean();
+
+      if (!caregiverProfile) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "CAREGIVER_PROFILE_NOT_FOUND",
+          },
+          { status: 404 }
+        );
+      }
+
+      caregiverId = caregiverProfile._id.toString();
+    }
 
     const bookings = await listBookingHistory({
       userId,
