@@ -34,6 +34,17 @@ export interface UpdatedCaregiverVerification {
   verificationStatus: CaregiverCreateStatus;
 }
 
+export interface CaregiverVerificationQueueItem {
+  id: string;
+  userId: string;
+  qualifications: string;
+  serviceAreas: string[];
+  rating: number;
+  isAvailable: boolean;
+  verificationStatus: CaregiverCreateStatus;
+  createdAt: Date;
+}
+
 export interface CaregiverListItem {
   id: string;
   userId: string;
@@ -116,4 +127,21 @@ export async function updateCaregiverVerificationStatus(
     id: caregiver._id.toString(),
     verificationStatus: caregiver.verificationStatus,
   };
+}
+
+export async function listCaregiversByVerificationStatus(
+  verificationStatus: CaregiverCreateStatus
+): Promise<CaregiverVerificationQueueItem[]> {
+  const caregivers = await Caregiver.find({ verificationStatus }).sort({ createdAt: 1 }).lean();
+
+  return caregivers.map((caregiver) => ({
+    id: caregiver._id.toString(),
+    userId: caregiver.userId.toString(),
+    qualifications: caregiver.qualifications,
+    serviceAreas: caregiver.serviceAreas,
+    rating: caregiver.rating,
+    isAvailable: caregiver.isAvailable,
+    verificationStatus: caregiver.verificationStatus,
+    createdAt: caregiver.createdAt,
+  }));
 }

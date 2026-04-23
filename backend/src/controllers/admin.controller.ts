@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { authenticateRequest } from "@/middleware/auth.middleware";
 import {
   isValidCaregiverStatus,
+  listCaregiversByVerificationStatus,
   updateCaregiverVerificationStatus,
 } from "@/services/caregiver.service";
 import { isValidObjectId } from "@/services/booking.service";
@@ -109,6 +110,50 @@ export async function updateCaregiverVerificationController(request: Request) {
       {
         success: false,
         message: "Failed to update caregiver verification",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function listPendingCaregiversController(request: Request) {
+  const authResult = authenticateRequest(request, ["admin"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const pendingCaregivers = await listCaregiversByVerificationStatus("pending");
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Pending caregivers fetched successfully",
+        data: pendingCaregivers,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch pending caregivers",
         error: message,
       },
       { status: 500 }
