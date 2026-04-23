@@ -1,4 +1,8 @@
-import { createCaregiverController, listCaregiversController } from "@/controllers/caregiver.controller";
+import {
+  createCaregiverController,
+  listCaregiversController,
+  updateCaregiverProfileController,
+} from "@/controllers/caregiver.controller";
 
 export const runtime = "nodejs";
 
@@ -8,4 +12,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   return createCaregiverController(request);
+}
+
+export async function PATCH(request: Request) {
+  return updateCaregiverProfileController(request);
 }

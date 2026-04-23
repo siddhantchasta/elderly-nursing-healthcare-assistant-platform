@@ -6,6 +6,7 @@ import {
   createCaregiverProfile,
   isValidCaregiverStatus,
   listAvailableCaregivers,
+  updateCaregiverProfile,
 } from "@/services/caregiver.service";
 
 interface CreateCaregiverRequestBody {
@@ -14,6 +15,11 @@ interface CreateCaregiverRequestBody {
   rating?: number;
   isAvailable?: boolean;
   verificationStatus?: string;
+}
+
+interface UpdateCaregiverProfileRequestBody {
+  isAvailable?: boolean;
+  serviceAreas?: string[];
 }
 
 export async function listCaregiversController() {
@@ -185,6 +191,103 @@ export async function createCaregiverController(request: Request) {
       {
         success: false,
         message: "Failed to create caregiver profile",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function updateCaregiverProfileController(request: Request) {
+  const authResult = authenticateRequest(request, ["caregiver"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
+  let body: UpdateCaregiverProfileRequestBody;
+
+  try {
+    body = (await request.json()) as UpdateCaregiverProfileRequestBody;
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid JSON payload",
+      },
+      { status: 400 }
+    );
+  }
+
+  const isAvailable = body.isAvailable;
+  const serviceAreas = body.serviceAreas;
+
+  if (isAvailable === undefined && serviceAreas === undefined) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "At least one field is required: isAvailable or serviceAreas",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (serviceAreas !== undefined) {
+    if (!Array.isArray(serviceAreas) || serviceAreas.length === 0 || serviceAreas.some((area) => !area?.trim())) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "serviceAreas must be a non-empty array of strings",
+        },
+        { status: 400 }
+      );
+    }
+  }
+
+  try {
+    await connectToDatabase();
+
+    const updatedCaregiver = await updateCaregiverProfile({
+      userId: authResult.auth.sub,
+      isAvailable,
+      serviceAreas: serviceAreas?.map((area) => area.trim()),
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Caregiver profile updated successfully",
+        data: updatedCaregiver,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message === "CAREGIVER_PROFILE_NOT_FOUND") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "CAREGIVER_PROFILE_NOT_FOUND",
+        },
+        { status: 404 }
+      );
+    }
+
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to update caregiver profile",
         error: message,
       },
       { status: 500 }

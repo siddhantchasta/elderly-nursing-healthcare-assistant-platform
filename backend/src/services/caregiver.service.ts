@@ -24,6 +24,19 @@ export interface CreatedCaregiver {
   verificationStatus: CaregiverCreateStatus;
 }
 
+export interface UpdateCaregiverProfileInput {
+  userId: string;
+  isAvailable?: boolean;
+  serviceAreas?: string[];
+}
+
+export interface UpdatedCaregiverProfile {
+  id: string;
+  isAvailable: boolean;
+  serviceAreas: string[];
+  updatedAt: Date;
+}
+
 export interface UpdateCaregiverVerificationInput {
   caregiverId: string;
   verificationStatus: CaregiverCreateStatus;
@@ -144,4 +157,31 @@ export async function listCaregiversByVerificationStatus(
     verificationStatus: caregiver.verificationStatus,
     createdAt: caregiver.createdAt,
   }));
+}
+
+export async function updateCaregiverProfile(
+  input: UpdateCaregiverProfileInput
+): Promise<UpdatedCaregiverProfile> {
+  const caregiver = await Caregiver.findOne({ userId: input.userId });
+
+  if (!caregiver) {
+    throw new Error("CAREGIVER_PROFILE_NOT_FOUND");
+  }
+
+  if (input.isAvailable !== undefined) {
+    caregiver.isAvailable = input.isAvailable;
+  }
+
+  if (input.serviceAreas !== undefined) {
+    caregiver.serviceAreas = input.serviceAreas;
+  }
+
+  await caregiver.save();
+
+  return {
+    id: caregiver._id.toString(),
+    isAvailable: caregiver.isAvailable,
+    serviceAreas: caregiver.serviceAreas,
+    updatedAt: caregiver.updatedAt,
+  };
 }
