@@ -4,10 +4,12 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { authenticateRequest } from "@/middleware/auth.middleware";
 import {
   createCaregiverProfile,
+  getCaregiverWorkSummary,
   isValidCaregiverStatus,
   listAvailableCaregivers,
   updateCaregiverProfile,
 } from "@/services/caregiver.service";
+import Caregiver from "@/models/Caregiver";
 
 interface CreateCaregiverRequestBody {
   qualifications?: string;
@@ -288,6 +290,62 @@ export async function updateCaregiverProfileController(request: Request) {
       {
         success: false,
         message: "Failed to update caregiver profile",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function getCaregiverWorkHistoryController(request: Request) {
+  const authResult = authenticateRequest(request, ["caregiver"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const caregiverProfile = await Caregiver.findOne({ userId: authResult.auth.sub }).lean();
+
+    if (!caregiverProfile) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "CAREGIVER_PROFILE_NOT_FOUND",
+        },
+        { status: 404 }
+      );
+    }
+
+    const workSummary = await getCaregiverWorkSummary(caregiverProfile._id.toString());
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Caregiver work history fetched successfully",
+        data: workSummary,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch caregiver work history",
         error: message,
       },
       { status: 500 }

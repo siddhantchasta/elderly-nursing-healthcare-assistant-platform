@@ -1,4 +1,6 @@
 import Caregiver from "@/models/Caregiver";
+import Booking, { BookingStatus } from "@/models/Booking";
+import Service from "@/models/Service";
 import User from "@/models/User";
 
 export const CAREGIVER_CREATE_STATUSES = ["pending", "verified", "rejected"] as const;
@@ -64,6 +66,21 @@ export interface CaregiverListItem {
   qualifications: string;
   rating: number;
   serviceAreas: string[];
+}
+
+export interface CaregiverWorkHistoryItem {
+  bookingId: string;
+  serviceId: string;
+  serviceName: string;
+  status: BookingStatus;
+  scheduledAt: Date;
+  servicePrice: number;
+}
+
+export interface CaregiverWorkSummary {
+  totalCompletedBookings: number;
+  totalEarnings: number;
+  history: CaregiverWorkHistoryItem[];
 }
 
 export function isValidCaregiverStatus(status: string): status is CaregiverCreateStatus {
@@ -183,5 +200,42 @@ export async function updateCaregiverProfile(
     isAvailable: caregiver.isAvailable,
     serviceAreas: caregiver.serviceAreas,
     updatedAt: caregiver.updatedAt,
+  };
+}
+
+export async function getCaregiverWorkSummary(caregiverId: string): Promise<CaregiverWorkSummary> {
+  const workStatuses: BookingStatus[] = ["accepted", "in_progress", "completed"];
+
+  const bookings = await Booking.find({
+    caregiverId,
+    status: { $in: workStatuses },
+  })
+    .sort({ scheduledAt: -1 })
+    .lean();
+
+  const serviceIds = bookings.map((booking) => booking.serviceId.toString());
+  const services = await Service.find({ _id: { $in: serviceIds } }).lean();
+  const serviceMap = new Map(services.map((service) => [service._id.toString(), service]));
+
+  const history: CaregiverWorkHistoryItem[] = bookings.map((booking) => {
+    const service = serviceMap.get(booking.serviceId.toString());
+
+    return {
+      bookingId: booking._id.toString(),
+      serviceId: booking.serviceId.toString(),
+      serviceName: service?.serviceName ?? "Unknown Service",
+      status: booking.status,
+      scheduledAt: booking.scheduledAt,
+      servicePrice: service?.price ?? 0,
+    };
+  });
+
+  const completedBookings = history.filter((item) => item.status === "completed");
+  const totalEarnings = completedBookings.reduce((sum, item) => sum + item.servicePrice, 0);
+
+  return {
+    totalCompletedBookings: completedBookings.length,
+    totalEarnings,
+    history,
   };
 }
