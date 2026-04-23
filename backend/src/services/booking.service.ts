@@ -73,6 +73,18 @@ export interface BookingHistoryItem {
   statusUpdatedAt: Date;
 }
 
+export interface BookingDetail {
+  id: string;
+  userId: string;
+  patientId: string;
+  caregiverId: string;
+  serviceId: string;
+  bookingType: BookingType;
+  status: BookingStatus;
+  scheduledAt: Date;
+  statusUpdatedAt: Date;
+}
+
 export function isValidBookingType(bookingType: string): bookingType is BookingType {
   return BOOKING_TYPES.includes(bookingType as BookingType);
 }
@@ -243,4 +255,24 @@ export async function listBookingHistory(query: BookingHistoryQuery): Promise<Bo
     scheduledAt: booking.scheduledAt,
     statusUpdatedAt: booking.statusUpdatedAt,
   }));
+}
+
+export async function getBookingById(bookingId: string): Promise<BookingDetail> {
+  const booking = await Booking.findById(bookingId).lean();
+
+  if (!booking) {
+    throw new Error("BOOKING_NOT_FOUND");
+  }
+
+  return {
+    id: booking._id.toString(),
+    userId: booking.userId.toString(),
+    patientId: booking.patientId.toString(),
+    caregiverId: booking.caregiverId.toString(),
+    serviceId: booking.serviceId.toString(),
+    bookingType: booking.bookingType,
+    status: booking.status,
+    scheduledAt: booking.scheduledAt,
+    statusUpdatedAt: booking.statusUpdatedAt,
+  };
 }
