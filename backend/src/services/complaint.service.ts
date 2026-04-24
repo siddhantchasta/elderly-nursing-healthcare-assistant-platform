@@ -1,6 +1,6 @@
 import Booking from "@/models/Booking";
 import Caregiver from "@/models/Caregiver";
-import Complaint from "@/models/Complaint";
+import Complaint, { COMPLAINT_STATUSES, ComplaintStatus } from "@/models/Complaint";
 
 export interface CreateComplaintInput {
   bookingId: string;
@@ -17,6 +17,20 @@ export interface CreatedComplaint {
   message: string;
   status: "open";
   createdAt: Date;
+}
+
+export interface ComplaintListItem {
+  id: string;
+  bookingId: string;
+  raisedByUserId: string;
+  raisedByRole: "user" | "caregiver";
+  message: string;
+  status: ComplaintStatus;
+  createdAt: Date;
+}
+
+export function isValidComplaintStatus(status: string): status is ComplaintStatus {
+  return COMPLAINT_STATUSES.includes(status as ComplaintStatus);
 }
 
 export async function createComplaint(input: CreateComplaintInput): Promise<CreatedComplaint> {
@@ -55,4 +69,20 @@ export async function createComplaint(input: CreateComplaintInput): Promise<Crea
     status: "open",
     createdAt: createdComplaint.createdAt,
   };
+}
+
+export async function listComplaints(status?: ComplaintStatus): Promise<ComplaintListItem[]> {
+  const filter = status ? { status } : {};
+
+  const complaints = await Complaint.find(filter).sort({ createdAt: -1 }).lean();
+
+  return complaints.map((complaint) => ({
+    id: complaint._id.toString(),
+    bookingId: complaint.bookingId.toString(),
+    raisedByUserId: complaint.raisedByUserId.toString(),
+    raisedByRole: complaint.raisedByRole,
+    message: complaint.message,
+    status: complaint.status,
+    createdAt: complaint.createdAt,
+  }));
 }
