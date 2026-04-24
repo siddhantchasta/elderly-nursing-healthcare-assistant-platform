@@ -29,6 +29,17 @@ export interface ComplaintListItem {
   createdAt: Date;
 }
 
+export interface UpdateComplaintStatusInput {
+  complaintId: string;
+  status: ComplaintStatus;
+}
+
+export interface UpdatedComplaintStatus {
+  id: string;
+  status: ComplaintStatus;
+  updatedAt: Date;
+}
+
 export function isValidComplaintStatus(status: string): status is ComplaintStatus {
   return COMPLAINT_STATUSES.includes(status as ComplaintStatus);
 }
@@ -85,4 +96,23 @@ export async function listComplaints(status?: ComplaintStatus): Promise<Complain
     status: complaint.status,
     createdAt: complaint.createdAt,
   }));
+}
+
+export async function updateComplaintStatus(
+  input: UpdateComplaintStatusInput
+): Promise<UpdatedComplaintStatus> {
+  const complaint = await Complaint.findById(input.complaintId);
+
+  if (!complaint) {
+    throw new Error("COMPLAINT_NOT_FOUND");
+  }
+
+  complaint.status = input.status;
+  await complaint.save();
+
+  return {
+    id: complaint._id.toString(),
+    status: complaint.status,
+    updatedAt: complaint.updatedAt,
+  };
 }

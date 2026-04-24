@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { authenticateRequest } from "@/middleware/auth.middleware";
-import { isValidComplaintStatus, listComplaints } from "@/services/complaint.service";
+import {
+  isValidComplaintStatus,
+  listComplaints,
+  updateComplaintStatus,
+} from "@/services/complaint.service";
 import { getAdminKpiSummary, listUsersForAdmin } from "@/services/admin.service";
 import {
   isValidCaregiverStatus,
@@ -13,6 +17,11 @@ import { isValidObjectId } from "@/services/booking.service";
 interface UpdateCaregiverVerificationRequestBody {
   caregiverId?: string;
   verificationStatus?: string;
+}
+
+interface UpdateComplaintStatusRequestBody {
+  complaintId?: string;
+  status?: string;
 }
 
 export async function updateCaregiverVerificationController(request: Request) {
@@ -303,6 +312,110 @@ export async function listComplaintsController(request: Request) {
       {
         success: false,
         message: "Failed to fetch complaints",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function updateComplaintStatusController(request: Request) {
+  const authResult = authenticateRequest(request, ["admin"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
+  let body: UpdateComplaintStatusRequestBody;
+
+  try {
+    body = (await request.json()) as UpdateComplaintStatusRequestBody;
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid JSON payload",
+      },
+      { status: 400 }
+    );
+  }
+
+  const complaintId = body.complaintId?.trim();
+  const status = body.status?.trim();
+
+  if (!complaintId || !status) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "complaintId and status are required",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (!isValidObjectId(complaintId)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "complaintId must be a valid ObjectId",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (!isValidComplaintStatus(status)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "status must be open or resolved",
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const updatedComplaint = await updateComplaintStatus({
+      complaintId,
+      status,
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Complaint status updated successfully",
+        data: updatedComplaint,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message === "COMPLAINT_NOT_FOUND") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "COMPLAINT_NOT_FOUND",
+        },
+        { status: 404 }
+      );
+    }
+
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to update complaint status",
         error: message,
       },
       { status: 500 }
