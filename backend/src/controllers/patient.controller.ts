@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Types } from "mongoose";
 import { connectToDatabase } from "@/lib/mongodb";
 import { authenticateRequest } from "@/middleware/auth.middleware";
-import { createPatientProfile } from "@/services/patient.service";
+import { createPatientProfile, getPatientProfileByUserId } from "@/services/patient.service";
 
 interface CreatePatientRequestBody {
   age?: number;
@@ -130,6 +130,72 @@ export async function createPatientController(request: Request) {
       {
         success: false,
         message: "Failed to create patient profile",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function getPatientProfileController(request: Request) {
+  const authResult = authenticateRequest(request, ["user"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
+  const userId = authResult.auth.sub;
+
+  if (!Types.ObjectId.isValid(userId)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid userId",
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const patientProfile = await getPatientProfileByUserId(userId);
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Patient profile fetched successfully",
+        data: patientProfile,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message === "PATIENT_PROFILE_NOT_FOUND") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "PATIENT_PROFILE_NOT_FOUND",
+        },
+        { status: 404 }
+      );
+    }
+
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch patient profile",
         error: message,
       },
       { status: 500 }

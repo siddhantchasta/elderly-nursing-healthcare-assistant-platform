@@ -14,6 +14,15 @@ export interface CreatedPatient {
   medicalNeeds: string;
 }
 
+export interface PatientProfile {
+  id: string;
+  userId: string;
+  age: number;
+  medicalNeeds: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export async function createPatientProfile(input: CreatePatientInput): Promise<CreatedPatient> {
   const user = await User.findById(input.userId).lean();
 
@@ -42,5 +51,22 @@ export async function createPatientProfile(input: CreatePatientInput): Promise<C
     userId: createdPatient.userId.toString(),
     age: createdPatient.age,
     medicalNeeds: createdPatient.medicalNeeds,
+  };
+}
+
+export async function getPatientProfileByUserId(userId: string): Promise<PatientProfile> {
+  const patient = await Patient.findOne({ userId }).lean();
+
+  if (!patient) {
+    throw new Error("PATIENT_PROFILE_NOT_FOUND");
+  }
+
+  return {
+    id: patient._id.toString(),
+    userId: patient.userId.toString(),
+    age: patient.age,
+    medicalNeeds: patient.medicalNeeds,
+    createdAt: patient.createdAt,
+    updatedAt: patient.updatedAt,
   };
 }
