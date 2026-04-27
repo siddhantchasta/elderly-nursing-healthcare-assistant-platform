@@ -1,4 +1,4 @@
-import { createPatientController, getPatientProfileController } from "@/controllers/patient.controller";
+import { createPatientController, listPatientProfilesController } from "@/controllers/patient.controller";
 
 export const runtime = "nodejs";
 
@@ -7,5 +7,5 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
-  return getPatientProfileController(request);
+  return listPatientProfilesController(request);
 }

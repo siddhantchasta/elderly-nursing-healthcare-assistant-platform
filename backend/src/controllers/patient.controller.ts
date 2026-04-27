@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Types } from "mongoose";
 import { connectToDatabase } from "@/lib/mongodb";
 import { authenticateRequest } from "@/middleware/auth.middleware";
-import { createPatientProfile, getPatientProfileByUserId } from "@/services/patient.service";
+import { createPatientProfile, listPatientProfilesByUserId } from "@/services/patient.service";
 
 interface CreatePatientRequestBody {
   age?: number;
@@ -112,16 +112,6 @@ export async function createPatientController(request: Request) {
           { status: 409 }
         );
       }
-
-      if (error.message === "PATIENT_PROFILE_ALREADY_EXISTS") {
-        return NextResponse.json(
-          {
-            success: false,
-            message: "PATIENT_PROFILE_ALREADY_EXISTS",
-          },
-          { status: 409 }
-        );
-      }
     }
 
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -137,7 +127,7 @@ export async function createPatientController(request: Request) {
   }
 }
 
-export async function getPatientProfileController(request: Request) {
+export async function listPatientProfilesController(request: Request) {
   const authResult = authenticateRequest(request, ["user"]);
 
   if (authResult.response) {
@@ -169,33 +159,23 @@ export async function getPatientProfileController(request: Request) {
   try {
     await connectToDatabase();
 
-    const patientProfile = await getPatientProfileByUserId(userId);
+    const patientProfiles = await listPatientProfilesByUserId(userId);
 
     return NextResponse.json(
       {
         success: true,
-        message: "Patient profile fetched successfully",
-        data: patientProfile,
+        message: "Patient profiles fetched successfully",
+        data: patientProfiles,
       },
       { status: 200 }
     );
   } catch (error) {
-    if (error instanceof Error && error.message === "PATIENT_PROFILE_NOT_FOUND") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "PATIENT_PROFILE_NOT_FOUND",
-        },
-        { status: 404 }
-      );
-    }
-
     const message = error instanceof Error ? error.message : "Unknown error";
 
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to fetch patient profile",
+        message: "Failed to fetch patient profiles",
         error: message,
       },
       { status: 500 }

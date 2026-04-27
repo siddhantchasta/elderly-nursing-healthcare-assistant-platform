@@ -14,7 +14,6 @@ const patientSchema = new Schema<IPatient>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true,
       index: true,
     },
     age: {

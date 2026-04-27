@@ -34,12 +34,6 @@ export async function createPatientProfile(input: CreatePatientInput): Promise<C
     throw new Error("USER_ROLE_NOT_USER");
   }
 
-  const existingPatient = await Patient.findOne({ userId: input.userId }).lean();
-
-  if (existingPatient) {
-    throw new Error("PATIENT_PROFILE_ALREADY_EXISTS");
-  }
-
   const createdPatient = await Patient.create({
     userId: input.userId,
     age: input.age,
@@ -54,19 +48,15 @@ export async function createPatientProfile(input: CreatePatientInput): Promise<C
   };
 }
 
-export async function getPatientProfileByUserId(userId: string): Promise<PatientProfile> {
-  const patient = await Patient.findOne({ userId }).lean();
+export async function listPatientProfilesByUserId(userId: string): Promise<PatientProfile[]> {
+  const patients = await Patient.find({ userId }).sort({ createdAt: -1 }).lean();
 
-  if (!patient) {
-    throw new Error("PATIENT_PROFILE_NOT_FOUND");
-  }
-
-  return {
+  return patients.map((patient) => ({
     id: patient._id.toString(),
     userId: patient.userId.toString(),
     age: patient.age,
     medicalNeeds: patient.medicalNeeds,
     createdAt: patient.createdAt,
     updatedAt: patient.updatedAt,
-  };
+  }));
 }
