@@ -15,7 +15,6 @@ export interface CreateCaregiverInput {
   serviceIds?: string[];
   rating?: number;
   isAvailable?: boolean;
-  verificationStatus?: CaregiverCreateStatus;
 }
 
 export interface CreatedCaregiver {
@@ -159,7 +158,7 @@ export async function createCaregiverProfile(input: CreateCaregiverInput): Promi
     isAvailable: input.isAvailable ?? true,
     serviceAreas: input.serviceAreas,
     serviceIds,
-    verificationStatus: input.verificationStatus ?? "pending",
+    verificationStatus: "pending",
   });
 
   return {

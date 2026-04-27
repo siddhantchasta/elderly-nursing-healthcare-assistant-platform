@@ -6,7 +6,6 @@ import {
   createCaregiverProfile,
   getCaregiverProfileByUserId,
   getCaregiverWorkSummary,
-  isValidCaregiverStatus,
   listAvailableCaregivers,
   updateCaregiverProfile,
 } from "@/services/caregiver.service";
@@ -18,7 +17,6 @@ interface CreateCaregiverRequestBody {
   serviceIds?: string[];
   rating?: number;
   isAvailable?: boolean;
-  verificationStatus?: string;
 }
 
 interface UpdateCaregiverProfileRequestBody {
@@ -92,7 +90,6 @@ export async function createCaregiverController(request: Request) {
   const serviceIds = body.serviceIds;
   const rating = body.rating;
   const isAvailable = body.isAvailable;
-  const verificationStatus = body.verificationStatus?.trim();
 
   if (!qualifications || !serviceAreas) {
     return NextResponse.json(
@@ -158,20 +155,6 @@ export async function createCaregiverController(request: Request) {
     }
   }
 
-  if (verificationStatus && !isValidCaregiverStatus(verificationStatus)) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Invalid verificationStatus. Allowed values: pending, verified, rejected",
-      },
-      { status: 400 }
-    );
-  }
-
-  const typedVerificationStatus = verificationStatus && isValidCaregiverStatus(verificationStatus)
-    ? verificationStatus
-    : undefined;
-
   try {
     await connectToDatabase();
 
@@ -182,7 +165,6 @@ export async function createCaregiverController(request: Request) {
       serviceIds: serviceIds?.map((serviceId) => serviceId.trim()),
       rating,
       isAvailable,
-      verificationStatus: typedVerificationStatus,
     });
 
     return NextResponse.json(
