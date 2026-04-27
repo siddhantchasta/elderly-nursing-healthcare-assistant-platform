@@ -83,6 +83,18 @@ export interface CaregiverWorkSummary {
   history: CaregiverWorkHistoryItem[];
 }
 
+export interface CaregiverSelfProfile {
+  id: string;
+  userId: string;
+  qualifications: string;
+  rating: number;
+  isAvailable: boolean;
+  serviceAreas: string[];
+  verificationStatus: CaregiverCreateStatus;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export function isValidCaregiverStatus(status: string): status is CaregiverCreateStatus {
   return CAREGIVER_CREATE_STATUSES.includes(status as CaregiverCreateStatus);
 }
@@ -199,6 +211,26 @@ export async function updateCaregiverProfile(
     id: caregiver._id.toString(),
     isAvailable: caregiver.isAvailable,
     serviceAreas: caregiver.serviceAreas,
+    updatedAt: caregiver.updatedAt,
+  };
+}
+
+export async function getCaregiverProfileByUserId(userId: string): Promise<CaregiverSelfProfile> {
+  const caregiver = await Caregiver.findOne({ userId }).lean();
+
+  if (!caregiver) {
+    throw new Error("CAREGIVER_PROFILE_NOT_FOUND");
+  }
+
+  return {
+    id: caregiver._id.toString(),
+    userId: caregiver.userId.toString(),
+    qualifications: caregiver.qualifications,
+    rating: caregiver.rating,
+    isAvailable: caregiver.isAvailable,
+    serviceAreas: caregiver.serviceAreas,
+    verificationStatus: caregiver.verificationStatus,
+    createdAt: caregiver.createdAt,
     updatedAt: caregiver.updatedAt,
   };
 }

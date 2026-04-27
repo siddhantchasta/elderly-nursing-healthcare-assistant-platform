@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { authenticateRequest } from "@/middleware/auth.middleware";
 import {
   createCaregiverProfile,
+  getCaregiverProfileByUserId,
   getCaregiverWorkSummary,
   isValidCaregiverStatus,
   listAvailableCaregivers,
@@ -346,6 +347,60 @@ export async function getCaregiverWorkHistoryController(request: Request) {
       {
         success: false,
         message: "Failed to fetch caregiver work history",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function getCaregiverProfileController(request: Request) {
+  const authResult = authenticateRequest(request, ["caregiver"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const caregiverProfile = await getCaregiverProfileByUserId(authResult.auth.sub);
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Caregiver profile fetched successfully",
+        data: caregiverProfile,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message === "CAREGIVER_PROFILE_NOT_FOUND") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "CAREGIVER_PROFILE_NOT_FOUND",
+        },
+        { status: 404 }
+      );
+    }
+
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch caregiver profile",
         error: message,
       },
       { status: 500 }
