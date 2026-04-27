@@ -1,5 +1,6 @@
 import Patient from "@/models/Patient";
 import User from "@/models/User";
+import { decryptMedicalData, encryptMedicalData } from "@/lib/encryption";
 
 export interface CreatePatientInput {
   userId: string;
@@ -37,14 +38,14 @@ export async function createPatientProfile(input: CreatePatientInput): Promise<C
   const createdPatient = await Patient.create({
     userId: input.userId,
     age: input.age,
-    medicalNeeds: input.medicalNeeds,
+    medicalNeeds: encryptMedicalData(input.medicalNeeds),
   });
 
   return {
     id: createdPatient._id.toString(),
     userId: createdPatient.userId.toString(),
     age: createdPatient.age,
-    medicalNeeds: createdPatient.medicalNeeds,
+    medicalNeeds: decryptMedicalData(createdPatient.medicalNeeds),
   };
 }
 
@@ -55,7 +56,7 @@ export async function listPatientProfilesByUserId(userId: string): Promise<Patie
     id: patient._id.toString(),
     userId: patient.userId.toString(),
     age: patient.age,
-    medicalNeeds: patient.medicalNeeds,
+    medicalNeeds: decryptMedicalData(patient.medicalNeeds),
     createdAt: patient.createdAt,
     updatedAt: patient.updatedAt,
   }));
