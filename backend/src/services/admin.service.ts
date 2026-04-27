@@ -16,6 +16,7 @@ export interface AdminKpiSummary {
   bookingCompletionRate: number;
   averageResponseTimeHours: number;
   monthlyActiveUsers: number;
+  userSatisfactionScore: number;
 }
 
 export interface UpdateUserRoleInput {
@@ -93,12 +94,27 @@ export async function getAdminKpiSummary(): Promise<AdminKpiSummary> {
     createdAt: { $gte: thirtyDaysAgo },
   });
 
+  const verifiedCaregiverRatings = await Caregiver.find({ verificationStatus: "verified" })
+    .select("rating")
+    .lean();
+
+  const userSatisfactionScore =
+    verifiedCaregiverRatings.length === 0
+      ? 0
+      : Number(
+          (
+            verifiedCaregiverRatings.reduce((sum, caregiver) => sum + caregiver.rating, 0) /
+            verifiedCaregiverRatings.length
+          ).toFixed(2)
+        );
+
   return {
     registeredUsersCount,
     verifiedCaregiversCount,
     bookingCompletionRate,
     averageResponseTimeHours,
     monthlyActiveUsers: activeUsers.length,
+    userSatisfactionScore,
   };
 }
 
