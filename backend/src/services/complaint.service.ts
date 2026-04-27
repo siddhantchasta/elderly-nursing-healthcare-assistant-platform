@@ -40,6 +40,12 @@ export interface UpdatedComplaintStatus {
   updatedAt: Date;
 }
 
+export interface ListReporterComplaintsInput {
+  raisedByUserId: string;
+  raisedByRole: "user" | "caregiver";
+  status?: ComplaintStatus;
+}
+
 export function isValidComplaintStatus(status: string): status is ComplaintStatus {
   return COMPLAINT_STATUSES.includes(status as ComplaintStatus);
 }
@@ -84,6 +90,35 @@ export async function createComplaint(input: CreateComplaintInput): Promise<Crea
 
 export async function listComplaints(status?: ComplaintStatus): Promise<ComplaintListItem[]> {
   const filter = status ? { status } : {};
+
+  const complaints = await Complaint.find(filter).sort({ createdAt: -1 }).lean();
+
+  return complaints.map((complaint) => ({
+    id: complaint._id.toString(),
+    bookingId: complaint.bookingId.toString(),
+    raisedByUserId: complaint.raisedByUserId.toString(),
+    raisedByRole: complaint.raisedByRole,
+    message: complaint.message,
+    status: complaint.status,
+    createdAt: complaint.createdAt,
+  }));
+}
+
+export async function listReporterComplaints(
+  input: ListReporterComplaintsInput
+): Promise<ComplaintListItem[]> {
+  const filter: {
+    raisedByUserId: string;
+    raisedByRole: "user" | "caregiver";
+    status?: ComplaintStatus;
+  } = {
+    raisedByUserId: input.raisedByUserId,
+    raisedByRole: input.raisedByRole,
+  };
+
+  if (input.status) {
+    filter.status = input.status;
+  }
 
   const complaints = await Complaint.find(filter).sort({ createdAt: -1 }).lean();
 
