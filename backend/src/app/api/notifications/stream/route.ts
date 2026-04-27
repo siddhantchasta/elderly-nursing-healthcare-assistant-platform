@@ -1,6 +1,6 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { authenticateRequest } from "@/middleware/auth.middleware";
-import Booking from "@/models/Booking";
+import { listUserNotifications } from "@/services/notification.service";
 
 export const runtime = "nodejs";
 
@@ -47,25 +47,13 @@ export async function GET(request: Request) {
         }
       });
 
-      // Send initial snapshot immediately
+      // Send initial snapshot immediately — both booking + complaint updates
       try {
-        const bookings = await Booking.find({ userId })
-          .sort({ statusUpdatedAt: -1 })
-          .lean();
-
-        const payload = bookings.map((b) => ({
-          bookingId: b._id.toString(),
-          patientId: b.patientId.toString(),
-          caregiverId: b.caregiverId.toString(),
-          serviceId: b.serviceId.toString(),
-          status: b.status,
-          scheduledAt: b.scheduledAt,
-          statusUpdatedAt: b.statusUpdatedAt,
-        }));
-
-        controller.enqueue(sseMessage("status_updates", payload));
+        const notifications = await listUserNotifications(userId);
+        controller.enqueue(sseMessage("booking_updates", notifications.bookingUpdates));
+        controller.enqueue(sseMessage("complaint_updates", notifications.complaintUpdates));
       } catch {
-        controller.enqueue(sseMessage("error", { message: "Failed to fetch status updates" }));
+        controller.enqueue(sseMessage("error", { message: "Failed to fetch notifications" }));
       }
 
       // Heartbeat timer — prevents proxy/load-balancer idle timeouts
@@ -82,8 +70,9 @@ export async function GET(request: Request) {
         }
       }, HEARTBEAT_INTERVAL_MS);
 
-      // Polling loop — push only when data changes
-      let lastSnapshot = "";
+      // Polling loop — push only when data changes (booking or complaint)
+      let lastBookingSnapshot = "";
+      let lastComplaintSnapshot = "";
 
       const pollTimer = setInterval(async () => {
         if (closed) {
@@ -93,26 +82,20 @@ export async function GET(request: Request) {
         }
 
         try {
-          const bookings = await Booking.find({ userId })
-            .sort({ statusUpdatedAt: -1 })
-            .lean();
+          const notifications = await listUserNotifications(userId);
 
-          const payload = bookings.map((b) => ({
-            bookingId: b._id.toString(),
-            patientId: b.patientId.toString(),
-            caregiverId: b.caregiverId.toString(),
-            serviceId: b.serviceId.toString(),
-            status: b.status,
-            scheduledAt: b.scheduledAt,
-            statusUpdatedAt: b.statusUpdatedAt,
-          }));
+          const bookingSnapshot = JSON.stringify(notifications.bookingUpdates);
+          const complaintSnapshot = JSON.stringify(notifications.complaintUpdates);
 
-          const snapshot = JSON.stringify(payload);
+          // Emit only the channels that actually changed — avoids redundant events
+          if (bookingSnapshot !== lastBookingSnapshot) {
+            lastBookingSnapshot = bookingSnapshot;
+            controller.enqueue(sseMessage("booking_updates", notifications.bookingUpdates));
+          }
 
-          // Emit only when something changed — avoids redundant events
-          if (snapshot !== lastSnapshot) {
-            lastSnapshot = snapshot;
-            controller.enqueue(sseMessage("status_updates", payload));
+          if (complaintSnapshot !== lastComplaintSnapshot) {
+            lastComplaintSnapshot = complaintSnapshot;
+            controller.enqueue(sseMessage("complaint_updates", notifications.complaintUpdates));
           }
         } catch {
           // Non-fatal, will retry on next tick

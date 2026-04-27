@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { authenticateRequest } from "@/middleware/auth.middleware";
-import { listUserStatusUpdates } from "@/services/notification.service";
+import { listUserNotifications } from "@/services/notification.service";
 
 export async function listUserStatusUpdatesController(request: Request) {
   const authResult = authenticateRequest(request, ["user"]);
@@ -23,13 +23,13 @@ export async function listUserStatusUpdatesController(request: Request) {
   try {
     await connectToDatabase();
 
-    const updates = await listUserStatusUpdates(authResult.auth.sub);
+    const notifications = await listUserNotifications(authResult.auth.sub);
 
     return NextResponse.json(
       {
         success: true,
-        message: "Status updates fetched successfully",
-        data: updates,
+        message: "Notifications fetched successfully",
+        data: notifications,
       },
       { status: 200 }
     );
@@ -39,7 +39,7 @@ export async function listUserStatusUpdatesController(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to fetch status updates",
+        message: "Failed to fetch notifications",
         error: message,
       },
       { status: 500 }

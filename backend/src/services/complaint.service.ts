@@ -27,6 +27,7 @@ export interface ComplaintListItem {
   message: string;
   status: ComplaintStatus;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface UpdateComplaintStatusInput {
@@ -65,6 +66,7 @@ export async function getComplaintById(complaintId: string): Promise<ComplaintLi
     message: complaint.message,
     status: complaint.status,
     createdAt: complaint.createdAt,
+    updatedAt: complaint.updatedAt,
   };
 }
 
@@ -119,6 +121,7 @@ export async function listComplaints(status?: ComplaintStatus): Promise<Complain
     message: complaint.message,
     status: complaint.status,
     createdAt: complaint.createdAt,
+    updatedAt: complaint.updatedAt,
   }));
 }
 
@@ -148,6 +151,7 @@ export async function listReporterComplaints(
     message: complaint.message,
     status: complaint.status,
     createdAt: complaint.createdAt,
+    updatedAt: complaint.updatedAt,
   }));
 }
 
