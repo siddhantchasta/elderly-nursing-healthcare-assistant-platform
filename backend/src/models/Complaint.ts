@@ -1,6 +1,6 @@
 import { Model, Schema, Types, model, models } from "mongoose";
 
-export const COMPLAINT_STATUSES = ["open", "resolved"] as const;
+export const COMPLAINT_STATUSES = ["open", "escalated", "resolved"] as const;
 export type ComplaintStatus = (typeof COMPLAINT_STATUSES)[number];
 
 export interface IComplaint {

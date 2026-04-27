@@ -295,7 +295,7 @@ export async function listComplaintsController(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: "status must be open or resolved",
+        message: "status must be open, escalated, or resolved",
       },
       { status: 400 }
     );
@@ -388,7 +388,7 @@ export async function updateComplaintStatusController(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: "status must be open or resolved",
+        message: "status must be open, escalated, or resolved",
       },
       { status: 400 }
     );

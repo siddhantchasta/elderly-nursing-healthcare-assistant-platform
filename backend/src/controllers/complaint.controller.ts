@@ -157,7 +157,7 @@ export async function listReporterComplaintsController(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: "status must be open or resolved",
+        message: "status must be open, escalated, or resolved",
       },
       { status: 400 }
     );
