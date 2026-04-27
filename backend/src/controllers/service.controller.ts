@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { authenticateRequest } from "@/middleware/auth.middleware";
 import { isValidObjectId } from "@/services/booking.service";
-import { createService, listServices, updateService } from "@/services/service.service";
+import {
+  createService,
+  isValidServiceCategory,
+  listServices,
+  updateService,
+} from "@/services/service.service";
 import { assertActiveServiceCategoryExists } from "@/services/serviceCategory.service";
 
 interface CreateServiceRequestBody {
@@ -111,12 +116,25 @@ export async function createServiceController(request: Request) {
     );
   }
 
+  if (!isValidServiceCategory(category)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "Invalid category. Allowed values: nursing_care, elderly_attendant, physiotherapy, post_hospital_care",
+      },
+      { status: 400 }
+    );
+  }
+
+  const typedCategory = category;
+
   try {
     await connectToDatabase();
     await assertActiveServiceCategoryExists(category);
 
     const createdService = await createService({
-      category,
+      category: typedCategory,
       serviceName,
       description,
       duration,
@@ -254,6 +272,19 @@ export async function updateServiceController(request: Request) {
     );
   }
 
+  if (category !== undefined && !isValidServiceCategory(category)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "Invalid category. Allowed values: nursing_care, elderly_attendant, physiotherapy, post_hospital_care",
+      },
+      { status: 400 }
+    );
+  }
+
+  const typedCategory = category;
+
   try {
     await connectToDatabase();
 
@@ -263,7 +294,7 @@ export async function updateServiceController(request: Request) {
 
     const updatedService = await updateService({
       serviceId,
-      category,
+      category: typedCategory,
       serviceName,
       description,
       duration,

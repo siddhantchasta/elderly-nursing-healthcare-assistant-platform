@@ -14,6 +14,11 @@ import {
   updateUserRole,
 } from "@/services/admin.service";
 import {
+  isValidServiceCategory,
+  listServiceCategorySummary,
+  recategorizeServices,
+} from "@/services/service.service";
+import {
   isValidCaregiverStatus,
   listCaregiversByVerificationStatus,
   updateCaregiverVerificationStatus,
@@ -33,6 +38,11 @@ interface UpdateComplaintStatusRequestBody {
 interface UpdateUserRoleRequestBody {
   userId?: string;
   role?: string;
+}
+
+interface RecategorizeServicesRequestBody {
+  fromCategory?: string;
+  toCategory?: string;
 }
 
 export async function updateCaregiverVerificationController(request: Request) {
@@ -575,6 +585,155 @@ export async function getOverviewReportController(request: Request) {
       {
         success: false,
         message: "Failed to fetch overview report",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function listServiceCategorySummaryController(request: Request) {
+  const authResult = authenticateRequest(request, ["admin"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const categories = await listServiceCategorySummary();
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Service categories fetched successfully",
+        data: categories,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch service categories",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function recategorizeServicesController(request: Request) {
+  const authResult = authenticateRequest(request, ["admin"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
+  let body: RecategorizeServicesRequestBody;
+
+  try {
+    body = (await request.json()) as RecategorizeServicesRequestBody;
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid JSON payload",
+      },
+      { status: 400 }
+    );
+  }
+
+  const fromCategory = body.fromCategory?.trim();
+  const toCategory = body.toCategory?.trim();
+
+  if (!fromCategory || !toCategory) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "fromCategory and toCategory are required",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (!isValidServiceCategory(fromCategory) || !isValidServiceCategory(toCategory)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "fromCategory and toCategory must be one of: nursing_care, elderly_attendant, physiotherapy, post_hospital_care",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (fromCategory === toCategory) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "fromCategory and toCategory must be different",
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const result = await recategorizeServices({
+      fromCategory,
+      toCategory,
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Services recategorized successfully",
+        data: result,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message === "SERVICE_ALREADY_EXISTS") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "SERVICE_ALREADY_EXISTS",
+        },
+        { status: 409 }
+      );
+    }
+
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to recategorize services",
         error: message,
       },
       { status: 500 }

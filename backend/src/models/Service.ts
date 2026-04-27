@@ -1,5 +1,13 @@
 import { Model, Schema, model, models } from "mongoose";
-export type ServiceCategory = string;
+
+export const SERVICE_CATEGORIES = [
+  "nursing_care",
+  "elderly_attendant",
+  "physiotherapy",
+  "post_hospital_care",
+] as const;
+
+export type ServiceCategory = (typeof SERVICE_CATEGORIES)[number];
 
 export interface IService {
   category: ServiceCategory;
@@ -16,6 +24,7 @@ const serviceSchema = new Schema<IService>(
   {
     category: {
       type: String,
+      enum: SERVICE_CATEGORIES,
       required: true,
       trim: true,
       lowercase: true,
