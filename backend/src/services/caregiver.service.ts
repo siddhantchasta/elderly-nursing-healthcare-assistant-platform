@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import Caregiver from "@/models/Caregiver";
 import Booking, { BookingStatus } from "@/models/Booking";
 import Service from "@/models/Service";
@@ -11,6 +12,7 @@ export interface CreateCaregiverInput {
   userId: string;
   qualifications: string;
   serviceAreas: string[];
+  serviceIds?: string[];
   rating?: number;
   isAvailable?: boolean;
   verificationStatus?: CaregiverCreateStatus;
@@ -23,6 +25,7 @@ export interface CreatedCaregiver {
   rating: number;
   isAvailable: boolean;
   serviceAreas: string[];
+  serviceIds: string[];
   verificationStatus: CaregiverCreateStatus;
 }
 
@@ -30,12 +33,14 @@ export interface UpdateCaregiverProfileInput {
   userId: string;
   isAvailable?: boolean;
   serviceAreas?: string[];
+  serviceIds?: string[];
 }
 
 export interface UpdatedCaregiverProfile {
   id: string;
   isAvailable: boolean;
   serviceAreas: string[];
+  serviceIds: string[];
   updatedAt: Date;
 }
 
@@ -54,6 +59,7 @@ export interface CaregiverVerificationQueueItem {
   userId: string;
   qualifications: string;
   serviceAreas: string[];
+  serviceIds: string[];
   rating: number;
   isAvailable: boolean;
   verificationStatus: CaregiverCreateStatus;
@@ -66,6 +72,7 @@ export interface CaregiverListItem {
   qualifications: string;
   rating: number;
   serviceAreas: string[];
+  serviceIds: string[];
 }
 
 export interface CaregiverWorkHistoryItem {
@@ -90,6 +97,7 @@ export interface CaregiverSelfProfile {
   rating: number;
   isAvailable: boolean;
   serviceAreas: string[];
+  serviceIds: string[];
   verificationStatus: CaregiverCreateStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -113,6 +121,7 @@ export async function listAvailableCaregivers(): Promise<CaregiverListItem[]> {
     qualifications: caregiver.qualifications,
     rating: caregiver.rating,
     serviceAreas: caregiver.serviceAreas,
+    serviceIds: caregiver.serviceIds.map((serviceId) => serviceId.toString()),
   }));
 }
 
@@ -133,12 +142,23 @@ export async function createCaregiverProfile(input: CreateCaregiverInput): Promi
     throw new Error("CAREGIVER_PROFILE_ALREADY_EXISTS");
   }
 
+  const serviceIds = Array.from(new Set(input.serviceIds ?? []));
+
+  if (serviceIds.length > 0) {
+    const existingServices = await Service.find({ _id: { $in: serviceIds } }).select("_id").lean();
+
+    if (existingServices.length !== serviceIds.length) {
+      throw new Error("SERVICE_NOT_FOUND");
+    }
+  }
+
   const createdCaregiver = await Caregiver.create({
     userId: input.userId,
     qualifications: input.qualifications,
     rating: input.rating ?? 0,
     isAvailable: input.isAvailable ?? true,
     serviceAreas: input.serviceAreas,
+    serviceIds,
     verificationStatus: input.verificationStatus ?? "pending",
   });
 
@@ -149,6 +169,7 @@ export async function createCaregiverProfile(input: CreateCaregiverInput): Promi
     rating: createdCaregiver.rating,
     isAvailable: createdCaregiver.isAvailable,
     serviceAreas: createdCaregiver.serviceAreas,
+    serviceIds: createdCaregiver.serviceIds.map((serviceId) => serviceId.toString()),
     verificationStatus: createdCaregiver.verificationStatus,
   };
 }
@@ -181,6 +202,7 @@ export async function listCaregiversByVerificationStatus(
     userId: caregiver.userId.toString(),
     qualifications: caregiver.qualifications,
     serviceAreas: caregiver.serviceAreas,
+    serviceIds: caregiver.serviceIds.map((serviceId) => serviceId.toString()),
     rating: caregiver.rating,
     isAvailable: caregiver.isAvailable,
     verificationStatus: caregiver.verificationStatus,
@@ -205,12 +227,24 @@ export async function updateCaregiverProfile(
     caregiver.serviceAreas = input.serviceAreas;
   }
 
+  if (input.serviceIds !== undefined) {
+    const deduplicatedServiceIds = Array.from(new Set(input.serviceIds));
+    const existingServices = await Service.find({ _id: { $in: deduplicatedServiceIds } }).select("_id").lean();
+
+    if (existingServices.length !== deduplicatedServiceIds.length) {
+      throw new Error("SERVICE_NOT_FOUND");
+    }
+
+    caregiver.serviceIds = deduplicatedServiceIds.map((serviceId) => new Types.ObjectId(serviceId));
+  }
+
   await caregiver.save();
 
   return {
     id: caregiver._id.toString(),
     isAvailable: caregiver.isAvailable,
     serviceAreas: caregiver.serviceAreas,
+    serviceIds: caregiver.serviceIds.map((serviceId) => serviceId.toString()),
     updatedAt: caregiver.updatedAt,
   };
 }
@@ -229,6 +263,7 @@ export async function getCaregiverProfileByUserId(userId: string): Promise<Careg
     rating: caregiver.rating,
     isAvailable: caregiver.isAvailable,
     serviceAreas: caregiver.serviceAreas,
+    serviceIds: caregiver.serviceIds.map((serviceId) => serviceId.toString()),
     verificationStatus: caregiver.verificationStatus,
     createdAt: caregiver.createdAt,
     updatedAt: caregiver.updatedAt,

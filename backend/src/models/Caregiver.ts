@@ -10,6 +10,7 @@ export interface ICaregiver {
   rating: number;
   isAvailable: boolean;
   serviceAreas: string[];
+  serviceIds: Types.ObjectId[];
   verificationStatus: CaregiverVerificationStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -44,6 +45,12 @@ const caregiverSchema = new Schema<ICaregiver>(
     },
     serviceAreas: {
       type: [String],
+      required: true,
+      default: [],
+    },
+    serviceIds: {
+      type: [Schema.Types.ObjectId],
+      ref: "Service",
       required: true,
       default: [],
     },

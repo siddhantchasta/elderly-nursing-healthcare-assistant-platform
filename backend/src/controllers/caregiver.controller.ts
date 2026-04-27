@@ -15,6 +15,7 @@ import Caregiver from "@/models/Caregiver";
 interface CreateCaregiverRequestBody {
   qualifications?: string;
   serviceAreas?: string[];
+  serviceIds?: string[];
   rating?: number;
   isAvailable?: boolean;
   verificationStatus?: string;
@@ -23,6 +24,7 @@ interface CreateCaregiverRequestBody {
 interface UpdateCaregiverProfileRequestBody {
   isAvailable?: boolean;
   serviceAreas?: string[];
+  serviceIds?: string[];
 }
 
 export async function listCaregiversController() {
@@ -87,6 +89,7 @@ export async function createCaregiverController(request: Request) {
   const userId = authResult.auth.sub;
   const qualifications = body.qualifications?.trim();
   const serviceAreas = body.serviceAreas;
+  const serviceIds = body.serviceIds;
   const rating = body.rating;
   const isAvailable = body.isAvailable;
   const verificationStatus = body.verificationStatus?.trim();
@@ -131,6 +134,30 @@ export async function createCaregiverController(request: Request) {
     );
   }
 
+  if (serviceIds !== undefined) {
+    if (!Array.isArray(serviceIds) || serviceIds.length === 0 || serviceIds.some((serviceId) => !serviceId?.trim())) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "serviceIds must be a non-empty array of ObjectId strings",
+        },
+        { status: 400 }
+      );
+    }
+
+    const hasInvalidServiceId = serviceIds.some((serviceId) => !Types.ObjectId.isValid(serviceId.trim()));
+
+    if (hasInvalidServiceId) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Each serviceId must be a valid ObjectId",
+        },
+        { status: 400 }
+      );
+    }
+  }
+
   if (verificationStatus && !isValidCaregiverStatus(verificationStatus)) {
     return NextResponse.json(
       {
@@ -152,6 +179,7 @@ export async function createCaregiverController(request: Request) {
       userId,
       qualifications,
       serviceAreas: serviceAreas.map((area) => area.trim()),
+      serviceIds: serviceIds?.map((serviceId) => serviceId.trim()),
       rating,
       isAvailable,
       verificationStatus: typedVerificationStatus,
@@ -177,7 +205,11 @@ export async function createCaregiverController(request: Request) {
         );
       }
 
-      if (error.message === "USER_ROLE_NOT_CAREGIVER" || error.message === "CAREGIVER_PROFILE_ALREADY_EXISTS") {
+      if (
+        error.message === "USER_ROLE_NOT_CAREGIVER" ||
+        error.message === "CAREGIVER_PROFILE_ALREADY_EXISTS" ||
+        error.message === "SERVICE_NOT_FOUND"
+      ) {
         return NextResponse.json(
           {
             success: false,
@@ -234,12 +266,13 @@ export async function updateCaregiverProfileController(request: Request) {
 
   const isAvailable = body.isAvailable;
   const serviceAreas = body.serviceAreas;
+  const serviceIds = body.serviceIds;
 
-  if (isAvailable === undefined && serviceAreas === undefined) {
+  if (isAvailable === undefined && serviceAreas === undefined && serviceIds === undefined) {
     return NextResponse.json(
       {
         success: false,
-        message: "At least one field is required: isAvailable or serviceAreas",
+        message: "At least one field is required: isAvailable, serviceAreas, or serviceIds",
       },
       { status: 400 }
     );
@@ -257,6 +290,30 @@ export async function updateCaregiverProfileController(request: Request) {
     }
   }
 
+  if (serviceIds !== undefined) {
+    if (!Array.isArray(serviceIds) || serviceIds.length === 0 || serviceIds.some((serviceId) => !serviceId?.trim())) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "serviceIds must be a non-empty array of ObjectId strings",
+        },
+        { status: 400 }
+      );
+    }
+
+    const hasInvalidServiceId = serviceIds.some((serviceId) => !Types.ObjectId.isValid(serviceId.trim()));
+
+    if (hasInvalidServiceId) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Each serviceId must be a valid ObjectId",
+        },
+        { status: 400 }
+      );
+    }
+  }
+
   try {
     await connectToDatabase();
 
@@ -264,6 +321,7 @@ export async function updateCaregiverProfileController(request: Request) {
       userId: authResult.auth.sub,
       isAvailable,
       serviceAreas: serviceAreas?.map((area) => area.trim()),
+      serviceIds: serviceIds?.map((serviceId) => serviceId.trim()),
     });
 
     return NextResponse.json(
@@ -275,14 +333,26 @@ export async function updateCaregiverProfileController(request: Request) {
       { status: 200 }
     );
   } catch (error) {
-    if (error instanceof Error && error.message === "CAREGIVER_PROFILE_NOT_FOUND") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "CAREGIVER_PROFILE_NOT_FOUND",
-        },
-        { status: 404 }
-      );
+    if (error instanceof Error) {
+      if (error.message === "CAREGIVER_PROFILE_NOT_FOUND") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "CAREGIVER_PROFILE_NOT_FOUND",
+          },
+          { status: 404 }
+        );
+      }
+
+      if (error.message === "SERVICE_NOT_FOUND") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "SERVICE_NOT_FOUND",
+          },
+          { status: 404 }
+        );
+      }
     }
 
     const message = error instanceof Error ? error.message : "Unknown error";
