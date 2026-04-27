@@ -2,12 +2,8 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { authenticateRequest } from "@/middleware/auth.middleware";
 import { isValidObjectId } from "@/services/booking.service";
-import {
-  createService,
-  isValidServiceCategory,
-  listServices,
-  updateService,
-} from "@/services/service.service";
+import { createService, listServices, updateService } from "@/services/service.service";
+import { assertActiveServiceCategoryExists } from "@/services/serviceCategory.service";
 
 interface CreateServiceRequestBody {
   category?: string;
@@ -87,7 +83,7 @@ export async function createServiceController(request: Request) {
     );
   }
 
-  const category = body.category?.trim();
+  const category = body.category?.trim().toLowerCase();
   const serviceName = body.serviceName?.trim();
   const description = body.description?.trim();
   const duration = body.duration?.trim();
@@ -105,17 +101,6 @@ export async function createServiceController(request: Request) {
     );
   }
 
-  if (!isValidServiceCategory(category)) {
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Invalid category. Allowed values: nursing_care, elderly_attendant, physiotherapy, post_hospital_care",
-      },
-      { status: 400 }
-    );
-  }
-
   if (typeof price !== "number" || price < 0) {
     return NextResponse.json(
       {
@@ -128,6 +113,7 @@ export async function createServiceController(request: Request) {
 
   try {
     await connectToDatabase();
+    await assertActiveServiceCategoryExists(category);
 
     const createdService = await createService({
       category,
@@ -147,14 +133,26 @@ export async function createServiceController(request: Request) {
       { status: 201 }
     );
   } catch (error) {
-    if (error instanceof Error && error.message === "SERVICE_ALREADY_EXISTS") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "SERVICE_ALREADY_EXISTS",
-        },
-        { status: 409 }
-      );
+    if (error instanceof Error) {
+      if (error.message === "SERVICE_ALREADY_EXISTS") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "SERVICE_ALREADY_EXISTS",
+          },
+          { status: 409 }
+        );
+      }
+
+      if (error.message === "SERVICE_CATEGORY_NOT_FOUND_OR_INACTIVE") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "SERVICE_CATEGORY_NOT_FOUND_OR_INACTIVE",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -202,7 +200,7 @@ export async function updateServiceController(request: Request) {
   }
 
   const serviceId = body.serviceId?.trim();
-  const category = body.category?.trim();
+  const category = body.category?.trim().toLowerCase();
   const serviceName = body.serviceName?.trim();
   const description = body.description?.trim();
   const duration = body.duration?.trim();
@@ -246,17 +244,6 @@ export async function updateServiceController(request: Request) {
     );
   }
 
-  if (category !== undefined && !isValidServiceCategory(category)) {
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Invalid category. Allowed values: nursing_care, elderly_attendant, physiotherapy, post_hospital_care",
-      },
-      { status: 400 }
-    );
-  }
-
   if (price !== undefined && (typeof price !== "number" || price < 0)) {
     return NextResponse.json(
       {
@@ -269,6 +256,10 @@ export async function updateServiceController(request: Request) {
 
   try {
     await connectToDatabase();
+
+    if (category !== undefined) {
+      await assertActiveServiceCategoryExists(category);
+    }
 
     const updatedService = await updateService({
       serviceId,
@@ -307,6 +298,16 @@ export async function updateServiceController(request: Request) {
             message: "SERVICE_ALREADY_EXISTS",
           },
           { status: 409 }
+        );
+      }
+
+      if (error.message === "SERVICE_CATEGORY_NOT_FOUND_OR_INACTIVE") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "SERVICE_CATEGORY_NOT_FOUND_OR_INACTIVE",
+          },
+          { status: 400 }
         );
       }
     }

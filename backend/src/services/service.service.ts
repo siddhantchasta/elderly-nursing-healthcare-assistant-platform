@@ -1,4 +1,4 @@
-import Service, { SERVICE_CATEGORIES, ServiceCategory } from "@/models/Service";
+import Service, { ServiceCategory } from "@/models/Service";
 
 export interface CreateServiceInput {
   category: ServiceCategory;
@@ -47,10 +47,6 @@ export interface ServiceListItem {
   duration: string;
   price: number;
   requiredQualification: string;
-}
-
-export function isValidServiceCategory(category: string): category is ServiceCategory {
-  return SERVICE_CATEGORIES.includes(category as ServiceCategory);
 }
 
 export async function listServices(): Promise<ServiceListItem[]> {
