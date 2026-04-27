@@ -25,6 +25,12 @@ export async function createPatientProfile(input: CreatePatientInput): Promise<C
     throw new Error("USER_ROLE_NOT_USER");
   }
 
+  const existingPatient = await Patient.findOne({ userId: input.userId }).lean();
+
+  if (existingPatient) {
+    throw new Error("PATIENT_PROFILE_ALREADY_EXISTS");
+  }
+
   const createdPatient = await Patient.create({
     userId: input.userId,
     age: input.age,

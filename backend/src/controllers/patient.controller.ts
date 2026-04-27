@@ -112,6 +112,16 @@ export async function createPatientController(request: Request) {
           { status: 409 }
         );
       }
+
+      if (error.message === "PATIENT_PROFILE_ALREADY_EXISTS") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "PATIENT_PROFILE_ALREADY_EXISTS",
+          },
+          { status: 409 }
+        );
+      }
     }
 
     const message = error instanceof Error ? error.message : "Unknown error";
