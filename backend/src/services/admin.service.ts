@@ -1,6 +1,6 @@
 import Booking from "@/models/Booking";
 import Caregiver from "@/models/Caregiver";
-import User from "@/models/User";
+import User, { USER_ROLES, UserRole } from "@/models/User";
 
 export interface AdminUserListItem {
   id: string;
@@ -13,6 +13,21 @@ export interface AdminKpiSummary {
   registeredUsersCount: number;
   verifiedCaregiversCount: number;
   bookingCompletionRate: number;
+}
+
+export interface UpdateUserRoleInput {
+  userId: string;
+  role: UserRole;
+}
+
+export interface UpdatedUserRole {
+  id: string;
+  role: UserRole;
+  updatedAt: Date;
+}
+
+export function isValidUserRole(role: string): role is UserRole {
+  return USER_ROLES.includes(role as UserRole);
 }
 
 export async function listUsersForAdmin(): Promise<AdminUserListItem[]> {
@@ -40,5 +55,22 @@ export async function getAdminKpiSummary(): Promise<AdminKpiSummary> {
     registeredUsersCount,
     verifiedCaregiversCount,
     bookingCompletionRate,
+  };
+}
+
+export async function updateUserRole(input: UpdateUserRoleInput): Promise<UpdatedUserRole> {
+  const user = await User.findById(input.userId);
+
+  if (!user) {
+    throw new Error("USER_NOT_FOUND");
+  }
+
+  user.role = input.role;
+  await user.save();
+
+  return {
+    id: user._id.toString(),
+    role: user.role,
+    updatedAt: user.updatedAt,
   };
 }

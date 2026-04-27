@@ -6,7 +6,12 @@ import {
   listComplaints,
   updateComplaintStatus,
 } from "@/services/complaint.service";
-import { getAdminKpiSummary, listUsersForAdmin } from "@/services/admin.service";
+import {
+  getAdminKpiSummary,
+  isValidUserRole,
+  listUsersForAdmin,
+  updateUserRole,
+} from "@/services/admin.service";
 import {
   isValidCaregiverStatus,
   listCaregiversByVerificationStatus,
@@ -22,6 +27,11 @@ interface UpdateCaregiverVerificationRequestBody {
 interface UpdateComplaintStatusRequestBody {
   complaintId?: string;
   status?: string;
+}
+
+interface UpdateUserRoleRequestBody {
+  userId?: string;
+  role?: string;
 }
 
 export async function updateCaregiverVerificationController(request: Request) {
@@ -416,6 +426,110 @@ export async function updateComplaintStatusController(request: Request) {
       {
         success: false,
         message: "Failed to update complaint status",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function updateUserRoleController(request: Request) {
+  const authResult = authenticateRequest(request, ["admin"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
+  let body: UpdateUserRoleRequestBody;
+
+  try {
+    body = (await request.json()) as UpdateUserRoleRequestBody;
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid JSON payload",
+      },
+      { status: 400 }
+    );
+  }
+
+  const userId = body.userId?.trim();
+  const role = body.role?.trim();
+
+  if (!userId || !role) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "userId and role are required",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (!isValidObjectId(userId)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "userId must be a valid ObjectId",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (!isValidUserRole(role)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "role must be user, caregiver, or admin",
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const updatedUser = await updateUserRole({
+      userId,
+      role,
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "User role updated successfully",
+        data: updatedUser,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message === "USER_NOT_FOUND") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "USER_NOT_FOUND",
+        },
+        { status: 404 }
+      );
+    }
+
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to update user role",
         error: message,
       },
       { status: 500 }
