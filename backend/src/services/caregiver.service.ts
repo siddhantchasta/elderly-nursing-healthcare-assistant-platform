@@ -68,6 +68,7 @@ export interface CaregiverVerificationQueueItem {
 export interface CaregiverListItem {
   id: string;
   userId: string;
+  email: string;
   qualifications: string;
   rating: number;
   serviceAreas: string[];
@@ -114,9 +115,17 @@ export async function listAvailableCaregivers(): Promise<CaregiverListItem[]> {
     .sort({ rating: -1, createdAt: -1 })
     .lean();
 
+  // Single bulk lookup — no N+1
+  const userIds = caregivers.map((c) => c.userId);
+  const users = await User.find({ _id: { $in: userIds } })
+    .select("_id email")
+    .lean();
+  const userEmailMap = new Map(users.map((u) => [u._id.toString(), u.email]));
+
   return caregivers.map((caregiver) => ({
     id: caregiver._id.toString(),
     userId: caregiver.userId.toString(),
+    email: userEmailMap.get(caregiver.userId.toString()) ?? "",
     qualifications: caregiver.qualifications,
     rating: caregiver.rating,
     serviceAreas: caregiver.serviceAreas,

@@ -4,6 +4,7 @@ import { authenticateRequest } from "@/middleware/auth.middleware";
 import { isValidObjectId } from "@/services/booking.service";
 import {
   createComplaint,
+  getComplaintById,
   isValidComplaintStatus,
   listReporterComplaints,
 } from "@/services/complaint.service";
@@ -200,6 +201,67 @@ export async function listReporterComplaintsController(request: Request) {
       {
         success: false,
         message: "Failed to fetch complaints",
+        error: messageText,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// ─── Get Single Complaint ─────────────────────────────────────────────────────
+
+export async function getComplaintByIdController(request: Request, complaintId: string) {
+  const authResult = authenticateRequest(request, ["user", "caregiver"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      { success: false, message: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
+  if (!isValidObjectId(complaintId)) {
+    return NextResponse.json(
+      { success: false, message: "complaintId must be a valid ObjectId" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const complaint = await getComplaintById(complaintId);
+
+    // Ownership check — users/caregivers may only read their own complaints
+    if (complaint.raisedByUserId !== authResult.auth.sub) {
+      return NextResponse.json(
+        { success: false, message: "COMPLAINT_ACCESS_DENIED" },
+        { status: 403 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: true, data: complaint },
+      { status: 200 }
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message === "COMPLAINT_NOT_FOUND") {
+      return NextResponse.json(
+        { success: false, message: "COMPLAINT_NOT_FOUND" },
+        { status: 404 }
+      );
+    }
+
+    const messageText = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch complaint",
         error: messageText,
       },
       { status: 500 }

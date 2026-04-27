@@ -50,6 +50,24 @@ export function isValidComplaintStatus(status: string): status is ComplaintStatu
   return COMPLAINT_STATUSES.includes(status as ComplaintStatus);
 }
 
+export async function getComplaintById(complaintId: string): Promise<ComplaintListItem> {
+  const complaint = await Complaint.findById(complaintId).lean();
+
+  if (!complaint) {
+    throw new Error("COMPLAINT_NOT_FOUND");
+  }
+
+  return {
+    id: complaint._id.toString(),
+    bookingId: complaint.bookingId.toString(),
+    raisedByUserId: complaint.raisedByUserId.toString(),
+    raisedByRole: complaint.raisedByRole,
+    message: complaint.message,
+    status: complaint.status,
+    createdAt: complaint.createdAt,
+  };
+}
+
 export async function createComplaint(input: CreateComplaintInput): Promise<CreatedComplaint> {
   const booking = await Booking.findById(input.bookingId).lean();
 
