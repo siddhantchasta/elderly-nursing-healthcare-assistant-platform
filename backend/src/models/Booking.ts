@@ -16,6 +16,7 @@ export interface IBooking {
   status: BookingStatus;
   scheduledAt: Date;
   statusUpdatedAt: Date;
+  userRating: number | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -68,6 +69,12 @@ const bookingSchema = new Schema<IBooking>(
       type: Date,
       required: true,
       default: Date.now,
+    },
+    userRating: {
+      type: Number,
+      min: 1,
+      max: 5,
+      default: null,
     },
   },
   {

@@ -269,6 +269,74 @@ export async function getCaregiverProfileByUserId(userId: string): Promise<Careg
   };
 }
 
+export interface SubmitBookingRatingInput {
+  bookingId: string;
+  userId: string;
+  rating: number;
+}
+
+export interface SubmittedBookingRating {
+  bookingId: string;
+  caregiverId: string;
+  userRating: number;
+  caregiverNewAverageRating: number;
+}
+
+export async function submitBookingRating(
+  input: SubmitBookingRatingInput
+): Promise<SubmittedBookingRating> {
+  const booking = await Booking.findById(input.bookingId);
+
+  if (!booking) {
+    throw new Error("BOOKING_NOT_FOUND");
+  }
+
+  if (booking.userId.toString() !== input.userId) {
+    throw new Error("BOOKING_ACCESS_DENIED");
+  }
+
+  if (booking.status !== "completed") {
+    throw new Error("BOOKING_NOT_COMPLETED");
+  }
+
+  if (booking.userRating !== null && booking.userRating !== undefined) {
+    throw new Error("BOOKING_ALREADY_RATED");
+  }
+
+  // Persist rating on the booking document
+  booking.userRating = input.rating;
+  await booking.save();
+
+  // Recompute caregiver average from all rated completed bookings
+  const caregiverId = booking.caregiverId.toString();
+
+  const ratedBookings = await Booking.find({
+    caregiverId: booking.caregiverId,
+    status: "completed",
+    userRating: { $ne: null },
+  })
+    .select("userRating")
+    .lean();
+
+  const totalRatings = ratedBookings.length;
+  const sumRatings = ratedBookings.reduce(
+    (sum, b) => sum + (b.userRating ?? 0),
+    0
+  );
+  const newAverage = totalRatings === 0 ? 0 : Number((sumRatings / totalRatings).toFixed(2));
+
+  await Caregiver.findByIdAndUpdate(booking.caregiverId, {
+    $set: { rating: newAverage },
+  });
+
+  return {
+    bookingId: booking._id.toString(),
+    caregiverId,
+    userRating: input.rating,
+    caregiverNewAverageRating: newAverage,
+  };
+}
+
 export async function getCaregiverWorkSummary(caregiverId: string): Promise<CaregiverWorkSummary> {
   const workStatuses: BookingStatus[] = ["accepted", "in_progress", "completed"];
 

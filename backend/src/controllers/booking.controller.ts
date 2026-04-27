@@ -13,6 +13,8 @@ import {
   updateBookingDecision,
   updateBookingStatus,
 } from "@/services/booking.service";
+import { submitBookingRating } from "@/services/caregiver.service";
+
 
 interface CreateBookingRequestBody {
   patientId?: string;
@@ -595,6 +597,153 @@ export async function getBookingByIdController(request: Request, bookingId: stri
       {
         success: false,
         message: "Failed to fetch booking",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// ─── Rate Booking ─────────────────────────────────────────────────────────────
+
+interface RateBookingRequestBody {
+  rating?: number;
+}
+
+export async function rateBookingController(request: Request, bookingId: string) {
+  const authResult = authenticateRequest(request, ["user"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
+  if (!isValidObjectId(bookingId)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "bookingId must be a valid ObjectId",
+      },
+      { status: 400 }
+    );
+  }
+
+  let body: RateBookingRequestBody;
+
+  try {
+    body = (await request.json()) as RateBookingRequestBody;
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid JSON payload",
+      },
+      { status: 400 }
+    );
+  }
+
+  const rating = body.rating;
+
+  if (rating === undefined || rating === null) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "rating is required",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (
+    typeof rating !== "number" ||
+    !Number.isInteger(rating) ||
+    rating < 1 ||
+    rating > 5
+  ) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "rating must be an integer between 1 and 5",
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const result = await submitBookingRating({
+      bookingId,
+      userId: authResult.auth.sub,
+      rating,
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Booking rated successfully",
+        data: result,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "BOOKING_NOT_FOUND") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "BOOKING_NOT_FOUND",
+          },
+          { status: 404 }
+        );
+      }
+
+      if (error.message === "BOOKING_ACCESS_DENIED") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "BOOKING_ACCESS_DENIED",
+          },
+          { status: 403 }
+        );
+      }
+
+      if (error.message === "BOOKING_NOT_COMPLETED") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Booking must be completed before it can be rated",
+          },
+          { status: 422 }
+        );
+      }
+
+      if (error.message === "BOOKING_ALREADY_RATED") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "This booking has already been rated",
+          },
+          { status: 409 }
+        );
+      }
+    }
+
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to submit rating",
         error: message,
       },
       { status: 500 }
