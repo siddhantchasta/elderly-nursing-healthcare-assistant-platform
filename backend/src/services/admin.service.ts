@@ -14,6 +14,8 @@ export interface AdminKpiSummary {
   registeredUsersCount: number;
   verifiedCaregiversCount: number;
   bookingCompletionRate: number;
+  averageResponseTimeHours: number;
+  monthlyActiveUsers: number;
 }
 
 export interface UpdateUserRoleInput {
@@ -59,10 +61,44 @@ export async function getAdminKpiSummary(): Promise<AdminKpiSummary> {
 
   const bookingCompletionRate = totalBookings === 0 ? 0 : Number(((completedBookings / totalBookings) * 100).toFixed(2));
 
+  const acceptedLikeBookings = await Booking.find({
+    status: { $in: ["accepted", "in_progress", "completed"] },
+  })
+    .select("createdAt statusUpdatedAt")
+    .lean();
+
+  const responseTimesInHours = acceptedLikeBookings
+    .map((booking) => {
+      const createdAtMs = new Date(booking.createdAt).getTime();
+      const acceptedAtMs = new Date(booking.statusUpdatedAt).getTime();
+      const diffMs = acceptedAtMs - createdAtMs;
+
+      if (diffMs < 0) {
+        return null;
+      }
+
+      return diffMs / (1000 * 60 * 60);
+    })
+    .filter((hours): hours is number => hours !== null);
+
+  const averageResponseTimeHours =
+    responseTimesInHours.length === 0
+      ? 0
+      : Number((responseTimesInHours.reduce((sum, hours) => sum + hours, 0) / responseTimesInHours.length).toFixed(2));
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const activeUsers = await Booking.distinct("userId", {
+    createdAt: { $gte: thirtyDaysAgo },
+  });
+
   return {
     registeredUsersCount,
     verifiedCaregiversCount,
     bookingCompletionRate,
+    averageResponseTimeHours,
+    monthlyActiveUsers: activeUsers.length,
   };
 }
 
