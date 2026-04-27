@@ -1,5 +1,6 @@
-import Booking from "@/models/Booking";
+import Booking, { BOOKING_STATUSES, BookingStatus } from "@/models/Booking";
 import Caregiver from "@/models/Caregiver";
+import Complaint, { COMPLAINT_STATUSES, ComplaintStatus } from "@/models/Complaint";
 import User, { USER_ROLES, UserRole } from "@/models/User";
 
 export interface AdminUserListItem {
@@ -24,6 +25,13 @@ export interface UpdatedUserRole {
   id: string;
   role: UserRole;
   updatedAt: Date;
+}
+
+export interface AdminOverviewReport {
+  bookingCountsByStatus: Record<BookingStatus, number>;
+  complaintCountsByStatus: Record<ComplaintStatus, number>;
+  totalBookings: number;
+  totalComplaints: number;
 }
 
 export function isValidUserRole(role: string): role is UserRole {
@@ -72,5 +80,32 @@ export async function updateUserRole(input: UpdateUserRoleInput): Promise<Update
     id: user._id.toString(),
     role: user.role,
     updatedAt: user.updatedAt,
+  };
+}
+
+export async function getAdminOverviewReport(): Promise<AdminOverviewReport> {
+  const bookingCountsByStatus = {} as Record<BookingStatus, number>;
+  const complaintCountsByStatus = {} as Record<ComplaintStatus, number>;
+
+  await Promise.all(
+    BOOKING_STATUSES.map(async (status) => {
+      bookingCountsByStatus[status] = await Booking.countDocuments({ status });
+    })
+  );
+
+  await Promise.all(
+    COMPLAINT_STATUSES.map(async (status) => {
+      complaintCountsByStatus[status] = await Complaint.countDocuments({ status });
+    })
+  );
+
+  const totalBookings = Object.values(bookingCountsByStatus).reduce((sum, count) => sum + count, 0);
+  const totalComplaints = Object.values(complaintCountsByStatus).reduce((sum, count) => sum + count, 0);
+
+  return {
+    bookingCountsByStatus,
+    complaintCountsByStatus,
+    totalBookings,
+    totalComplaints,
   };
 }

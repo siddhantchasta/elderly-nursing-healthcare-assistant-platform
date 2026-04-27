@@ -7,6 +7,7 @@ import {
   updateComplaintStatus,
 } from "@/services/complaint.service";
 import {
+  getAdminOverviewReport,
   getAdminKpiSummary,
   isValidUserRole,
   listUsersForAdmin,
@@ -530,6 +531,50 @@ export async function updateUserRoleController(request: Request) {
       {
         success: false,
         message: "Failed to update user role",
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function getOverviewReportController(request: Request) {
+  const authResult = authenticateRequest(request, ["admin"]);
+
+  if (authResult.response) {
+    return authResult.response;
+  }
+
+  if (!authResult.auth) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
+  try {
+    await connectToDatabase();
+
+    const report = await getAdminOverviewReport();
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Overview report fetched successfully",
+        data: report,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch overview report",
         error: message,
       },
       { status: 500 }
