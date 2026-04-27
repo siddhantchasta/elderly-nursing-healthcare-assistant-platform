@@ -49,22 +49,6 @@ export interface ServiceListItem {
   requiredQualification: string;
 }
 
-export interface ServiceCategorySummaryItem {
-  category: ServiceCategory;
-  totalServices: number;
-}
-
-export interface RecategorizeServicesInput {
-  fromCategory: ServiceCategory;
-  toCategory: ServiceCategory;
-}
-
-export interface RecategorizeServicesResult {
-  fromCategory: ServiceCategory;
-  toCategory: ServiceCategory;
-  matchedCount: number;
-  modifiedCount: number;
-}
 
 export function isValidServiceCategory(category: string): category is ServiceCategory {
   return SERVICE_CATEGORIES.includes(category as ServiceCategory);
@@ -171,41 +155,3 @@ export async function updateService(input: UpdateServiceInput): Promise<UpdatedS
   };
 }
 
-export async function listServiceCategorySummary(): Promise<ServiceCategorySummaryItem[]> {
-  const categoryCounts = await Promise.all(
-    SERVICE_CATEGORIES.map(async (category) => ({
-      category,
-      totalServices: await Service.countDocuments({ category }),
-    }))
-  );
-
-  return categoryCounts;
-}
-
-export async function recategorizeServices(
-  input: RecategorizeServicesInput
-): Promise<RecategorizeServicesResult> {
-  const sourceServiceNames = await Service.find({ category: input.fromCategory }).distinct("serviceName");
-  const conflictingServices = await Service.find({
-    category: input.toCategory,
-    serviceName: { $in: sourceServiceNames },
-  })
-    .select("serviceName")
-    .lean();
-
-  if (conflictingServices.length > 0) {
-    throw new Error("SERVICE_ALREADY_EXISTS");
-  }
-
-  const updateResult = await Service.updateMany(
-    { category: input.fromCategory },
-    { $set: { category: input.toCategory } }
-  );
-
-  return {
-    fromCategory: input.fromCategory,
-    toCategory: input.toCategory,
-    matchedCount: updateResult.matchedCount,
-    modifiedCount: updateResult.modifiedCount,
-  };
-}

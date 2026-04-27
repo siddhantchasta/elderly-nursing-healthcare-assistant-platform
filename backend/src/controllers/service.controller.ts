@@ -8,7 +8,7 @@ import {
   listServices,
   updateService,
 } from "@/services/service.service";
-import { assertActiveServiceCategoryExists } from "@/services/serviceCategory.service";
+
 
 interface CreateServiceRequestBody {
   category?: string;
@@ -131,7 +131,6 @@ export async function createServiceController(request: Request) {
 
   try {
     await connectToDatabase();
-    await assertActiveServiceCategoryExists(category);
 
     const createdService = await createService({
       category: typedCategory,
@@ -287,10 +286,6 @@ export async function updateServiceController(request: Request) {
 
   try {
     await connectToDatabase();
-
-    if (category !== undefined) {
-      await assertActiveServiceCategoryExists(category);
-    }
 
     const updatedService = await updateService({
       serviceId,
