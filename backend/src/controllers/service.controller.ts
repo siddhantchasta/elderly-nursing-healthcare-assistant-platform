@@ -147,6 +147,16 @@ export async function createServiceController(request: Request) {
       { status: 201 }
     );
   } catch (error) {
+    if (error instanceof Error && error.message === "SERVICE_ALREADY_EXISTS") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "SERVICE_ALREADY_EXISTS",
+        },
+        { status: 409 }
+      );
+    }
+
     const message = error instanceof Error ? error.message : "Unknown error";
 
     return NextResponse.json(
@@ -279,14 +289,26 @@ export async function updateServiceController(request: Request) {
       { status: 200 }
     );
   } catch (error) {
-    if (error instanceof Error && error.message === "SERVICE_NOT_FOUND") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "SERVICE_NOT_FOUND",
-        },
-        { status: 404 }
-      );
+    if (error instanceof Error) {
+      if (error.message === "SERVICE_NOT_FOUND") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "SERVICE_NOT_FOUND",
+          },
+          { status: 404 }
+        );
+      }
+
+      if (error.message === "SERVICE_ALREADY_EXISTS") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "SERVICE_ALREADY_EXISTS",
+          },
+          { status: 409 }
+        );
+      }
     }
 
     const message = error instanceof Error ? error.message : "Unknown error";

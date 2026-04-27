@@ -61,6 +61,8 @@ const serviceSchema = new Schema<IService>(
   }
 );
 
+serviceSchema.index({ category: 1, serviceName: 1 }, { unique: true });
+
 const Service: Model<IService> = models.Service || model<IService>("Service", serviceSchema);
 
 export default Service;

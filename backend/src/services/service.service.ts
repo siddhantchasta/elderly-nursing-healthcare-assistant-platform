@@ -68,6 +68,15 @@ export async function listServices(): Promise<ServiceListItem[]> {
 }
 
 export async function createService(input: CreateServiceInput): Promise<CreatedService> {
+  const existingService = await Service.findOne({
+    category: input.category,
+    serviceName: input.serviceName,
+  }).lean();
+
+  if (existingService) {
+    throw new Error("SERVICE_ALREADY_EXISTS");
+  }
+
   const createdService = await Service.create({
     category: input.category,
     serviceName: input.serviceName,
@@ -93,6 +102,19 @@ export async function updateService(input: UpdateServiceInput): Promise<UpdatedS
 
   if (!service) {
     throw new Error("SERVICE_NOT_FOUND");
+  }
+
+  const targetCategory = input.category ?? service.category;
+  const targetServiceName = input.serviceName ?? service.serviceName;
+
+  const conflictingService = await Service.findOne({
+    _id: { $ne: input.serviceId },
+    category: targetCategory,
+    serviceName: targetServiceName,
+  }).lean();
+
+  if (conflictingService) {
+    throw new Error("SERVICE_ALREADY_EXISTS");
   }
 
   if (input.category !== undefined) {
