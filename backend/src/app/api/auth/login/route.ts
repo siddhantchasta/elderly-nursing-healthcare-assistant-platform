@@ -1,7 +1,12 @@
 import { loginController } from "@/controllers/auth.controller";
+import { handleCorsOptions, withCors } from "@/lib/cors";
 
 export const runtime = "nodejs";
 
+export async function OPTIONS(request: Request) {
+  return handleCorsOptions(request);
+}
+
 export async function POST(request: Request) {
-  return loginController(request);
+  return withCors(await loginController(request), request);
 }

@@ -3,17 +3,22 @@ import {
   listBookingHistoryController,
   updateBookingDecisionController,
 } from "@/controllers/booking.controller";
+import { handleCorsOptions, withCors } from "@/lib/cors";
 
 export const runtime = "nodejs";
 
+export async function OPTIONS(request: Request) {
+  return handleCorsOptions(request);
+}
+
 export async function POST(request: Request) {
-  return createBookingController(request);
+  return withCors(await createBookingController(request), request);
 }
 
 export async function GET(request: Request) {
-  return listBookingHistoryController(request);
+  return withCors(await listBookingHistoryController(request), request);
 }
 
 export async function PATCH(request: Request) {
-  return updateBookingDecisionController(request);
+  return withCors(await updateBookingDecisionController(request), request);
 }

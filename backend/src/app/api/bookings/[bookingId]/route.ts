@@ -1,4 +1,5 @@
 import { getBookingByIdController } from "@/controllers/booking.controller";
+import { handleCorsOptions, withCors } from "@/lib/cors";
 
 export const runtime = "nodejs";
 
@@ -8,8 +9,12 @@ type RouteContext = {
   }>;
 };
 
+export async function OPTIONS(request: Request) {
+  return handleCorsOptions(request);
+}
+
 export async function GET(request: Request, context: RouteContext) {
   const { bookingId } = await context.params;
 
-  return getBookingByIdController(request, bookingId);
+  return withCors(await getBookingByIdController(request, bookingId), request);
 }

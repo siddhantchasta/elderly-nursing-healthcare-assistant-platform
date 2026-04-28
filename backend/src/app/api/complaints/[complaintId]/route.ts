@@ -1,4 +1,5 @@
 import { getComplaintByIdController } from "@/controllers/complaint.controller";
+import { handleCorsOptions, withCors } from "@/lib/cors";
 
 export const runtime = "nodejs";
 
@@ -8,8 +9,12 @@ type RouteContext = {
   }>;
 };
 
+export async function OPTIONS(request: Request) {
+  return handleCorsOptions(request);
+}
+
 export async function GET(request: Request, context: RouteContext) {
   const { complaintId } = await context.params;
 
-  return getComplaintByIdController(request, complaintId);
+  return withCors(await getComplaintByIdController(request, complaintId), request);
 }

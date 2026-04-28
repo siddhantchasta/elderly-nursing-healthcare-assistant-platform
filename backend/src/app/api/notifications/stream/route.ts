@@ -1,4 +1,5 @@
 import { connectToDatabase } from "@/lib/mongodb";
+import { handleCorsOptions, withCors } from "@/lib/cors";
 import { authenticateRequest } from "@/middleware/auth.middleware";
 import { listUserNotifications } from "@/services/notification.service";
 
@@ -9,17 +10,24 @@ const POLL_INTERVAL_MS = 5_000;
 // Keep-alive heartbeat to prevent proxies from closing idle connections
 const HEARTBEAT_INTERVAL_MS = 25_000;
 
+export async function OPTIONS(request: Request) {
+  return handleCorsOptions(request);
+}
+
 export async function GET(request: Request) {
   const authResult = authenticateRequest(request, ["user"]);
 
   if (authResult.response) {
-    return authResult.response;
+    return withCors(authResult.response, request);
   }
 
   if (!authResult.auth) {
-    return new Response(JSON.stringify({ success: false, message: "Unauthorized" }), {
-      status: 401,
-    });
+    return withCors(
+      new Response(JSON.stringify({ success: false, message: "Unauthorized" }), {
+        status: 401,
+      }),
+      request
+    );
   }
 
   const userId = authResult.auth.sub;
@@ -104,12 +112,15 @@ export async function GET(request: Request) {
     },
   });
 
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-      "X-Accel-Buffering": "no", // Disable Nginx buffering
-    },
-  });
+  return withCors(
+    new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no", // Disable Nginx buffering
+      },
+    }),
+    request
+  );
 }
