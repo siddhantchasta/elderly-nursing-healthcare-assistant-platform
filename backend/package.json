@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:admin": "ts-node scripts/seedAdmin.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -23,6 +24,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
