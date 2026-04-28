@@ -36,3 +36,18 @@ export interface UpdateCaregiverProfilePayload {
   serviceAreas?: string[];
   serviceIds?: string[];
 }
+
+export interface CaregiverWorkHistoryItem {
+  bookingId: string;
+  serviceId: string;
+  serviceName: string;
+  status: "accepted" | "in_progress" | "completed";
+  scheduledAt: string;
+  servicePrice: number;
+}
+
+export interface CaregiverWorkSummary {
+  totalCompletedBookings: number;
+  totalEarnings: number;
+  history: CaregiverWorkHistoryItem[];
+}

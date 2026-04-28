@@ -5,6 +5,7 @@ import type { ServiceItem } from "@/types/service";
 import type {
   CaregiverListItem,
   CaregiverProfile,
+  CaregiverWorkSummary,
   CreateCaregiverProfilePayload,
   UpdateCaregiverProfilePayload,
 } from "@/types/caregiver";
@@ -84,6 +85,12 @@ export function updateCaregiverProfile(payload: UpdateCaregiverProfilePayload) {
       body: JSON.stringify(payload),
     }
   );
+}
+
+export function getCaregiverWorkHistory() {
+  return apiAuthedRequest<CaregiverWorkSummary>("/api/caregivers/work-history", {
+    method: "GET",
+  });
 }
 
 export function createBooking(payload: CreateBookingPayload) {
