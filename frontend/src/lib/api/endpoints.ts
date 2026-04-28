@@ -99,6 +99,23 @@ export function listBookings() {
   });
 }
 
+export function updateBookingDecision(bookingId: string, decision: "accepted" | "rejected") {
+  return apiAuthedRequest<{ id: string; status: BookingItem["status"]; statusUpdatedAt: string }>("/api/bookings", {
+    method: "PATCH",
+    body: JSON.stringify({ bookingId, decision }),
+  });
+}
+
+export function updateBookingStatus(bookingId: string, status: "in_progress" | "completed") {
+  return apiAuthedRequest<{ id: string; status: BookingItem["status"]; statusUpdatedAt: string }>(
+    "/api/bookings/status",
+    {
+      method: "PATCH",
+      body: JSON.stringify({ bookingId, status }),
+    }
+  );
+}
+
 export function getBookingById(bookingId: string) {
   return apiAuthedRequest<BookingItem>(`/api/bookings/${bookingId}`, {
     method: "GET",

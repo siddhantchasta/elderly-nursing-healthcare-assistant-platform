@@ -23,6 +23,9 @@ export default function CaregiverDashboardPage() {
         <Link href="/caregiver/profile" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white">
           Manage Profile
         </Link>
+        <Link href="/caregiver/bookings" className="rounded-lg border border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-700">
+          Booking Requests
+        </Link>
       </div>
       <button
         onClick={() => {
