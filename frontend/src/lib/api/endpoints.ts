@@ -5,6 +5,7 @@ import type { ServiceItem } from "@/types/service";
 import type { CaregiverListItem } from "@/types/caregiver";
 import type { BookingItem, CreateBookingPayload } from "@/types/booking";
 import type { CareNoteItem } from "@/types/careNote";
+import type { ComplaintItem, CreateComplaintPayload } from "@/types/complaint";
 
 interface RegisterPayload {
   email: string;
@@ -89,4 +90,23 @@ export function rateBooking(bookingId: string, rating: number) {
       body: JSON.stringify({ rating }),
     }
   );
+}
+
+export function createComplaint(payload: CreateComplaintPayload) {
+  return apiAuthedRequest<ComplaintItem>("/api/complaints", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function listComplaints() {
+  return apiAuthedRequest<ComplaintItem[]>("/api/complaints", {
+    method: "GET",
+  });
+}
+
+export function getComplaintById(complaintId: string) {
+  return apiAuthedRequest<ComplaintItem>(`/api/complaints/${complaintId}`, {
+    method: "GET",
+  });
 }
