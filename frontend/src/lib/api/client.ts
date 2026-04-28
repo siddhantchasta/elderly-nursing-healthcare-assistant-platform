@@ -1,4 +1,5 @@
 import type { ApiResponse } from "@/types/api";
+import { getToken } from "@/lib/auth/session";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000";
 
@@ -29,4 +30,20 @@ export async function apiRequest<T>(path: string, init: RequestInit): Promise<T>
   }
 
   return payload.data;
+}
+
+export async function apiAuthedRequest<T>(path: string, init: RequestInit): Promise<T> {
+  const token = getToken();
+
+  if (!token) {
+    throw new ApiClientError("Please login to continue", 401);
+  }
+
+  return apiRequest<T>(path, {
+    ...init,
+    headers: {
+      ...(init.headers ?? {}),
+      Authorization: `Bearer ${token}`,
+    },
+  });
 }

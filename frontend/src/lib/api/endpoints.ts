@@ -1,5 +1,6 @@
-import { apiRequest } from "@/lib/api/client";
+import { apiAuthedRequest, apiRequest } from "@/lib/api/client";
 import type { LoginResponseData, RegisterResponseData, UserRole } from "@/types/auth";
+import type { CreatePatientPayload, PatientProfile } from "@/types/patient";
 
 interface RegisterPayload {
   email: string;
@@ -23,5 +24,18 @@ export function loginUser(payload: LoginPayload) {
   return apiRequest<LoginResponseData>("/api/auth/login", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export function createPatientProfile(payload: CreatePatientPayload) {
+  return apiAuthedRequest<PatientProfile>("/api/patients", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function listPatientProfiles() {
+  return apiAuthedRequest<PatientProfile[]>("/api/patients", {
+    method: "GET",
   });
 }
