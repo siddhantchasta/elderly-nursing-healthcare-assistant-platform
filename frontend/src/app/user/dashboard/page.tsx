@@ -26,6 +26,9 @@ export default function UserDashboardPage() {
         <Link href="/user/services" className="rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-700">
           Browse Services
         </Link>
+        <Link href="/user/caregivers" className="rounded-lg border border-slate-400 px-4 py-2 text-sm font-medium text-slate-700">
+          Browse Caregivers
+        </Link>
       </div>
       <button
         onClick={() => {
