@@ -29,6 +29,9 @@ export default function CaregiverDashboardPage() {
         <Link href="/caregiver/work-history" className="rounded-lg border border-emerald-600 px-4 py-2 text-sm font-medium text-emerald-700">
           Work History
         </Link>
+        <Link href="/caregiver/complaints" className="rounded-lg border border-rose-600 px-4 py-2 text-sm font-medium text-rose-700">
+          Complaints
+        </Link>
       </div>
       <button
         onClick={() => {

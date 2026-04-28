@@ -171,6 +171,9 @@ export default function CaregiverBookingsManager() {
                         <Link href={`/caregiver/bookings/${booking.id}`} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700">
                           View
                         </Link>
+                        <Link href="/caregiver/complaints" className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-700">
+                          Report Issue
+                        </Link>
                         {booking.status === "pending" ? (
                           <>
                             <button
