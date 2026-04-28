@@ -3,6 +3,7 @@ import type { LoginResponseData, RegisterResponseData, UserRole } from "@/types/
 import type { CreatePatientPayload, PatientProfile } from "@/types/patient";
 import type { ServiceItem } from "@/types/service";
 import type { CaregiverListItem } from "@/types/caregiver";
+import type { BookingItem, CreateBookingPayload } from "@/types/booking";
 
 interface RegisterPayload {
   email: string;
@@ -51,5 +52,12 @@ export function listServices() {
 export function listCaregivers() {
   return apiRequest<CaregiverListItem[]>("/api/caregivers", {
     method: "GET",
+  });
+}
+
+export function createBooking(payload: CreateBookingPayload) {
+  return apiAuthedRequest<BookingItem>("/api/bookings", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }
