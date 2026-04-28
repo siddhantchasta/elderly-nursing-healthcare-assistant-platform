@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ApiClientError } from "@/lib/api/client";
 import { listBookings, listCaregivers, listPatientProfiles, listServices } from "@/lib/api/endpoints";
@@ -109,6 +110,7 @@ export default function BookingHistory() {
                 <th className="px-2 py-2 font-medium">Type</th>
                 <th className="px-2 py-2 font-medium">Scheduled At</th>
                 <th className="px-2 py-2 font-medium">Status</th>
+                <th className="px-2 py-2 font-medium">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -130,6 +132,11 @@ export default function BookingHistory() {
                       <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[booking.status]}`}>
                         {booking.status.replace("_", " ")}
                       </span>
+                    </td>
+                    <td className="px-2 py-3 text-sm">
+                      <Link href={`/user/bookings/${booking.id}`} className="font-medium text-blue-700">
+                        View
+                      </Link>
                     </td>
                   </tr>
                 );
