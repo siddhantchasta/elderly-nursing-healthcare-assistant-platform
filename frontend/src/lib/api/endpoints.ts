@@ -135,6 +135,13 @@ export function listCareNotes(bookingId: string) {
   });
 }
 
+export function createCareNote(bookingId: string, note: string) {
+  return apiAuthedRequest<CareNoteItem>("/api/bookings/notes", {
+    method: "POST",
+    body: JSON.stringify({ bookingId, note }),
+  });
+}
+
 export function rateBooking(bookingId: string, rating: number) {
   return apiAuthedRequest<{ bookingId: string; caregiverId: string; userRating: number; caregiverNewAverageRating: number }>(
     `/api/bookings/${bookingId}/rating`,

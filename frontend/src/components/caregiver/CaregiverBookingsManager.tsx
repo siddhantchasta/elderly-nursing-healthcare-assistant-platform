@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ApiClientError } from "@/lib/api/client";
@@ -167,6 +168,9 @@ export default function CaregiverBookingsManager() {
                     </td>
                     <td className="px-2 py-3 text-sm">
                       <div className="flex flex-wrap gap-2">
+                        <Link href={`/caregiver/bookings/${booking.id}`} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700">
+                          View
+                        </Link>
                         {booking.status === "pending" ? (
                           <>
                             <button
