@@ -2,7 +2,12 @@ import { apiAuthedRequest, apiRequest } from "@/lib/api/client";
 import type { LoginResponseData, RegisterResponseData, UserRole } from "@/types/auth";
 import type { CreatePatientPayload, PatientProfile } from "@/types/patient";
 import type { ServiceItem } from "@/types/service";
-import type { CaregiverListItem } from "@/types/caregiver";
+import type {
+  CaregiverListItem,
+  CaregiverProfile,
+  CreateCaregiverProfilePayload,
+  UpdateCaregiverProfilePayload,
+} from "@/types/caregiver";
 import type { BookingItem, CreateBookingPayload } from "@/types/booking";
 import type { CareNoteItem } from "@/types/careNote";
 import type { ComplaintItem, CreateComplaintPayload } from "@/types/complaint";
@@ -56,6 +61,29 @@ export function listCaregivers() {
   return apiRequest<CaregiverListItem[]>("/api/caregivers", {
     method: "GET",
   });
+}
+
+export function getCaregiverProfile() {
+  return apiAuthedRequest<CaregiverProfile>("/api/caregivers/me", {
+    method: "GET",
+  });
+}
+
+export function createCaregiverProfile(payload: CreateCaregiverProfilePayload) {
+  return apiAuthedRequest<CaregiverProfile>("/api/caregivers", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateCaregiverProfile(payload: UpdateCaregiverProfilePayload) {
+  return apiAuthedRequest<{ id: string; isAvailable: boolean; serviceAreas: string[]; serviceIds: string[] }>(
+    "/api/caregivers",
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }
+  );
 }
 
 export function createBooking(payload: CreateBookingPayload) {
