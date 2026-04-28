@@ -6,6 +6,7 @@ import type { CaregiverListItem } from "@/types/caregiver";
 import type { BookingItem, CreateBookingPayload } from "@/types/booking";
 import type { CareNoteItem } from "@/types/careNote";
 import type { ComplaintItem, CreateComplaintPayload } from "@/types/complaint";
+import type { UserNotifications } from "@/types/notification";
 
 interface RegisterPayload {
   email: string;
@@ -107,6 +108,12 @@ export function listComplaints() {
 
 export function getComplaintById(complaintId: string) {
   return apiAuthedRequest<ComplaintItem>(`/api/complaints/${complaintId}`, {
+    method: "GET",
+  });
+}
+
+export function listUserNotifications() {
+  return apiAuthedRequest<UserNotifications>("/api/notifications/status-updates", {
     method: "GET",
   });
 }

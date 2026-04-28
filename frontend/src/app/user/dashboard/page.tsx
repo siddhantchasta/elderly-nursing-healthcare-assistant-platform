@@ -38,6 +38,9 @@ export default function UserDashboardPage() {
         <Link href="/user/complaints" className="rounded-lg border border-rose-600 px-4 py-2 text-sm font-medium text-rose-700">
           Complaints
         </Link>
+        <Link href="/user/notifications" className="rounded-lg border border-teal-600 px-4 py-2 text-sm font-medium text-teal-700">
+          Notifications
+        </Link>
       </div>
       <button
         onClick={() => {
