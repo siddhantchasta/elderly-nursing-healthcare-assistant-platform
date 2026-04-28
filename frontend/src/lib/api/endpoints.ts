@@ -1,6 +1,7 @@
 import { apiAuthedRequest, apiRequest } from "@/lib/api/client";
 import type { LoginResponseData, RegisterResponseData, UserRole } from "@/types/auth";
 import type { CreatePatientPayload, PatientProfile } from "@/types/patient";
+import type { ServiceItem } from "@/types/service";
 
 interface RegisterPayload {
   email: string;
@@ -36,6 +37,12 @@ export function createPatientProfile(payload: CreatePatientPayload) {
 
 export function listPatientProfiles() {
   return apiAuthedRequest<PatientProfile[]>("/api/patients", {
+    method: "GET",
+  });
+}
+
+export function listServices() {
+  return apiRequest<ServiceItem[]>("/api/services", {
     method: "GET",
   });
 }

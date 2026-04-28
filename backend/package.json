@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed:admin": "ts-node scripts/seedAdmin.ts"
+    "seed:admin": "node --env-file=.env.local --import tsx scripts/seedAdmin.ts",
+    "seed:services": "node --env-file=.env.local --import tsx scripts/seedServices.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -25,6 +26,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }

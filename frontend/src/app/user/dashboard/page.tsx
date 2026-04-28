@@ -19,9 +19,12 @@ export default function UserDashboardPage() {
     <main className="min-h-screen bg-slate-100 p-8">
       <h1 className="text-2xl font-semibold">User Dashboard</h1>
       <p className="mt-2 text-slate-600">Authentication is active. Next step will build user features.</p>
-      <div className="mt-6">
+      <div className="mt-6 flex flex-wrap gap-3">
         <Link href="/user/patients" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white">
           Manage Patient Profiles
+        </Link>
+        <Link href="/user/services" className="rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-700">
+          Browse Services
         </Link>
       </div>
       <button
