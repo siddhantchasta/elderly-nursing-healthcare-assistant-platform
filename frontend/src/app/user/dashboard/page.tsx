@@ -32,6 +32,9 @@ export default function UserDashboardPage() {
         <Link href="/user/bookings/new" className="rounded-lg border border-emerald-600 px-4 py-2 text-sm font-medium text-emerald-700">
           Create Booking
         </Link>
+        <Link href="/user/bookings" className="rounded-lg border border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-700">
+          Track Bookings
+        </Link>
       </div>
       <button
         onClick={() => {

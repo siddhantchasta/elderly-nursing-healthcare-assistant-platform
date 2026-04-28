@@ -61,3 +61,9 @@ export function createBooking(payload: CreateBookingPayload) {
     body: JSON.stringify(payload),
   });
 }
+
+export function listBookings() {
+  return apiAuthedRequest<BookingItem[]>("/api/bookings", {
+    method: "GET",
+  });
+}
