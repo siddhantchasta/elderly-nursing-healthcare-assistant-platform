@@ -1,0 +1,94 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { FormEvent, useState } from "react";
+import { ApiClientError } from "@/lib/api/client";
+import { registerUser } from "@/lib/api/endpoints";
+
+export default function RegisterForm() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<"user" | "caregiver">("user");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      await registerUser({ email, password, role });
+      router.push("/login");
+    } catch (err) {
+      if (err instanceof ApiClientError) {
+        setError(err.message);
+      } else {
+        setError("Unexpected error during registration");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <form className="space-y-4" onSubmit={onSubmit}>
+      <div>
+        <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          required
+          className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          required
+          minLength={6}
+          className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="role">Role</label>
+        <select
+          id="role"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
+          value={role}
+          onChange={(event) => setRole(event.target.value as "user" | "caregiver")}
+        >
+          <option value="user">User / Family</option>
+          <option value="caregiver">Caregiver</option>
+        </select>
+      </div>
+
+      {error ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
+
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {isSubmitting ? "Creating account..." : "Register"}
+      </button>
+
+      <p className="text-sm text-slate-600">
+        Already have an account?{" "}
+        <Link href="/login" className="font-medium text-blue-600">
+          Login
+        </Link>
+      </p>
+    </form>
+  );
+}
