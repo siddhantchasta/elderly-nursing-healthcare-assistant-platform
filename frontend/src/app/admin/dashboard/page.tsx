@@ -26,6 +26,9 @@ export default function AdminDashboardPage() {
         <Link href="/admin/complaints" className="rounded-lg border border-rose-600 px-4 py-2 text-sm font-medium text-rose-700">
           Complaints
         </Link>
+        <Link href="/admin/users" className="rounded-lg border border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-700">
+          User Management
+        </Link>
       </div>
       <button
         onClick={() => {

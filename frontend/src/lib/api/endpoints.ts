@@ -127,6 +127,22 @@ export function updateAdminComplaintStatus(complaintId: string, status: "open" |
   );
 }
 
+export function listAdminUsers() {
+  return apiAuthedRequest<import("@/types/auth").AuthUser[]>("/api/admin/users", {
+    method: "GET",
+  });
+}
+
+export function updateAdminUserRole(userId: string, role: "user" | "caregiver" | "admin") {
+  return apiAuthedRequest<{ id: string; role: "user" | "caregiver" | "admin" }>(
+    "/api/admin/users",
+    {
+      method: "PATCH",
+      body: JSON.stringify({ userId, role }),
+    }
+  );
+}
+
 export function createBooking(payload: CreateBookingPayload) {
   return apiAuthedRequest<BookingItem>("/api/bookings", {
     method: "POST",
