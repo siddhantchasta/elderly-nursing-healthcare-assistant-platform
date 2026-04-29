@@ -1,5 +1,5 @@
 const ALLOWED_ORIGIN = "http://localhost:3001";
-const ALLOWED_METHODS = "GET, POST, PUT, DELETE, OPTIONS";
+const ALLOWED_METHODS = "GET, POST, PUT, PATCH, DELETE, OPTIONS";
 const ALLOWED_HEADERS = "Content-Type, Authorization";
 
 function resolveAllowedOrigin(request: Request): string {

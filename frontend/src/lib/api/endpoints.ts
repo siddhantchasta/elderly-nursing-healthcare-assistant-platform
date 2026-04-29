@@ -7,6 +7,7 @@ import type {
   CaregiverProfile,
   CaregiverWorkSummary,
   CreateCaregiverProfilePayload,
+  PendingCaregiverItem,
   UpdateCaregiverProfilePayload,
 } from "@/types/caregiver";
 import type { BookingItem, CreateBookingPayload } from "@/types/booking";
@@ -91,6 +92,22 @@ export function getCaregiverWorkHistory() {
   return apiAuthedRequest<CaregiverWorkSummary>("/api/caregivers/work-history", {
     method: "GET",
   });
+}
+
+export function listPendingCaregivers() {
+  return apiAuthedRequest<PendingCaregiverItem[]>("/api/admin/caregivers/pending", {
+    method: "GET",
+  });
+}
+
+export function updateCaregiverVerification(caregiverId: string, verificationStatus: "verified" | "rejected") {
+  return apiAuthedRequest<{ id: string; verificationStatus: "verified" | "rejected" }>(
+    "/api/admin/caregivers/verification",
+    {
+      method: "PATCH",
+      body: JSON.stringify({ caregiverId, verificationStatus }),
+    }
+  );
 }
 
 export function createBooking(payload: CreateBookingPayload) {

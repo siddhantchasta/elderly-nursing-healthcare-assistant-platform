@@ -51,3 +51,15 @@ export interface CaregiverWorkSummary {
   totalEarnings: number;
   history: CaregiverWorkHistoryItem[];
 }
+
+export interface PendingCaregiverItem {
+  id: string;
+  userId: string;
+  qualifications: string;
+  serviceAreas: string[];
+  serviceIds: string[];
+  rating: number;
+  isAvailable: boolean;
+  verificationStatus: CaregiverVerificationStatus;
+  createdAt: string;
+}
