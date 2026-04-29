@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { ApiClientError } from "@/lib/api/client";
 import { listAdminUsers, updateAdminUserRole } from "@/lib/api/endpoints";
 import { getSessionUser } from "@/lib/auth/session";
-import type { AuthUser, UserRole } from "@/types/auth";
+import type { UserRole } from "@/types/auth";
+import type { AdminUserListItem } from "@/types/admin";
 
 const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
   { value: "user", label: "User" },
@@ -15,7 +16,7 @@ const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
 
 export default function AdminUsersTable() {
   const router = useRouter();
-  const [users, setUsers] = useState<AuthUser[]>([]);
+  const [users, setUsers] = useState<AdminUserListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +106,7 @@ export default function AdminUsersTable() {
                 <th className="px-2 py-2 font-medium">User ID</th>
                 <th className="px-2 py-2 font-medium">Email</th>
                 <th className="px-2 py-2 font-medium">Role</th>
+                <th className="px-2 py-2 font-medium">Created</th>
                 <th className="px-2 py-2 font-medium">Action</th>
               </tr>
             </thead>
@@ -117,6 +119,7 @@ export default function AdminUsersTable() {
                     <td className="px-2 py-3 text-sm text-slate-700">{user.id}</td>
                     <td className="px-2 py-3 text-sm text-slate-800">{user.email}</td>
                     <td className="px-2 py-3 text-sm text-slate-700">{user.role}</td>
+                    <td className="px-2 py-3 text-sm text-slate-700">{new Date(user.createdAt).toLocaleString()}</td>
                     <td className="px-2 py-3 text-sm">
                       <div className="flex flex-wrap gap-2">
                         {ROLE_OPTIONS.map((option) => (

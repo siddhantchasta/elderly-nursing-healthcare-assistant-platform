@@ -128,7 +128,7 @@ export function updateAdminComplaintStatus(complaintId: string, status: "open" |
 }
 
 export function listAdminUsers() {
-  return apiAuthedRequest<import("@/types/auth").AuthUser[]>("/api/admin/users", {
+  return apiAuthedRequest<import("@/types/admin").AdminUserListItem[]>("/api/admin/users", {
     method: "GET",
   });
 }
@@ -141,6 +141,18 @@ export function updateAdminUserRole(userId: string, role: "user" | "caregiver" |
       body: JSON.stringify({ userId, role }),
     }
   );
+}
+
+export function getAdminKpis() {
+  return apiAuthedRequest<import("@/types/admin").AdminKpiSummary>("/api/admin/analytics/kpis", {
+    method: "GET",
+  });
+}
+
+export function getAdminOverviewReport() {
+  return apiAuthedRequest<import("@/types/admin").AdminOverviewReport>("/api/admin/reports/overview", {
+    method: "GET",
+  });
 }
 
 export function createBooking(payload: CreateBookingPayload) {
