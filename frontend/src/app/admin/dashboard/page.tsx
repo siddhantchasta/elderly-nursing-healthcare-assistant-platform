@@ -23,6 +23,9 @@ export default function AdminDashboardPage() {
         <Link href="/admin/caregivers/pending" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white">
           Verify Caregivers
         </Link>
+        <Link href="/admin/complaints" className="rounded-lg border border-rose-600 px-4 py-2 text-sm font-medium text-rose-700">
+          Complaints
+        </Link>
       </div>
       <button
         onClick={() => {

@@ -110,6 +110,23 @@ export function updateCaregiverVerification(caregiverId: string, verificationSta
   );
 }
 
+export function listAdminComplaints(status?: "open" | "escalated" | "resolved") {
+  const query = status ? `?status=${status}` : "";
+  return apiAuthedRequest<import("@/types/complaint").ComplaintItem[]>(`/api/admin/complaints${query}`, {
+    method: "GET",
+  });
+}
+
+export function updateAdminComplaintStatus(complaintId: string, status: "open" | "escalated" | "resolved") {
+  return apiAuthedRequest<{ id: string; status: "open" | "escalated" | "resolved" }>(
+    "/api/admin/complaints",
+    {
+      method: "PATCH",
+      body: JSON.stringify({ complaintId, status }),
+    }
+  );
+}
+
 export function createBooking(payload: CreateBookingPayload) {
   return apiAuthedRequest<BookingItem>("/api/bookings", {
     method: "POST",
