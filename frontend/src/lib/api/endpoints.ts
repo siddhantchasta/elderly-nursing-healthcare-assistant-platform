@@ -155,6 +155,35 @@ export function getAdminOverviewReport() {
   });
 }
 
+export function createService(payload: {
+  category: "nursing_care" | "elderly_attendant" | "physiotherapy" | "post_hospital_care";
+  serviceName: string;
+  description: string;
+  duration: string;
+  price: number;
+  requiredQualification: string;
+}) {
+  return apiAuthedRequest<import("@/types/service").ServiceItem>("/api/services", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateService(payload: {
+  serviceId: string;
+  category?: "nursing_care" | "elderly_attendant" | "physiotherapy" | "post_hospital_care";
+  serviceName?: string;
+  description?: string;
+  duration?: string;
+  price?: number;
+  requiredQualification?: string;
+}) {
+  return apiAuthedRequest<import("@/types/service").ServiceItem>("/api/services", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function createBooking(payload: CreateBookingPayload) {
   return apiAuthedRequest<BookingItem>("/api/bookings", {
     method: "POST",
