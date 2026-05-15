@@ -9,10 +9,10 @@ import { getSessionUser } from "@/lib/auth/session";
 import type { BookingItem } from "@/types/booking";
 import type { ComplaintItem } from "@/types/complaint";
 
-const STATUS_STYLES: Record<ComplaintItem["status"], string> = {
-  open: "bg-amber-100 text-amber-800",
-  escalated: "bg-rose-100 text-rose-800",
-  resolved: "bg-emerald-100 text-emerald-800",
+const STATUS_CONFIG: Record<ComplaintItem["status"], { bg: string; text: string; label: string }> = {
+  open: { bg: "bg-amber-50", text: "text-amber-700", label: "Open" },
+  escalated: { bg: "bg-red-50", text: "text-red-700", label: "Escalated" },
+  resolved: { bg: "bg-green-50", text: "text-green-700", label: "Resolved" },
 };
 
 export default function CaregiverComplaintsManager() {
@@ -98,110 +98,178 @@ export default function CaregiverComplaintsManager() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="mt-3 text-sm text-muted-foreground">Loading complaints...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-slate-900">Raise Complaint</h2>
-        <p className="mt-1 text-sm text-slate-600">Report issues for an assigned booking.</p>
+      {error && (
+        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+          <svg className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
 
-        {error ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-        {success ? <p className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{success}</p> : null}
+      {success && (
+        <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+          <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-sm text-green-700">{success}</p>
+        </div>
+      )}
 
-        {!loading ? (
-          <form className="mt-5 space-y-4" onSubmit={onSubmit}>
+      {/* Submit Complaint Form */}
+      <div className="rounded-xl border border-border bg-card">
+        <div className="border-b border-border px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
+              <svg className="h-4 w-4 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+            </div>
             <div>
-              <label htmlFor="bookingId" className="mb-1 block text-sm font-medium text-slate-700">Booking</label>
-              <select
-                id="bookingId"
-                required
-                value={bookingId}
-                onChange={(event) => setBookingId(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
-              >
-                {bookings.map((booking) => (
-                  <option key={booking.id} value={booking.id}>
-                    {booking.id} ({booking.status})
-                  </option>
-                ))}
-              </select>
+              <h2 className="font-semibold text-foreground">Report an Issue</h2>
+              <p className="text-sm text-muted-foreground">File a complaint for any booking-related issues</p>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={onSubmit} className="p-6">
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="bookingId" className="mb-2 block text-sm font-medium text-foreground">
+                Select Booking
+              </label>
+              {bookings.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No bookings available to report issues.</p>
+              ) : (
+                <select
+                  id="bookingId"
+                  required
+                  value={bookingId}
+                  onChange={(event) => setBookingId(event.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  {bookings.map((booking) => (
+                    <option key={booking.id} value={booking.id}>
+                      Booking {booking.id.slice(0, 8)}... - {booking.status.replace("_", " ")}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div>
-              <label htmlFor="message" className="mb-1 block text-sm font-medium text-slate-700">Complaint Message</label>
+              <label htmlFor="message" className="mb-2 block text-sm font-medium text-foreground">
+                Describe the Issue
+              </label>
               <textarea
                 id="message"
                 required
                 rows={4}
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
+                placeholder="Please provide details about the issue you encountered..."
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={submitting || bookings.length === 0}
-              className="rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white disabled:opacity-60"
-            >
-              {submitting ? "Submitting..." : "Submit Complaint"}
-            </button>
-          </form>
-        ) : (
-          <p className="mt-4 text-sm text-slate-600">Loading booking options...</p>
-        )}
-      </section>
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={submitting || bookings.length === 0}
+                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              >
+                {submitting ? "Submitting..." : "Submit Complaint"}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
 
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-slate-900">My Complaints</h2>
-          <button onClick={() => void loadData()} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">
+      {/* Complaints List */}
+      <div className="rounded-xl border border-border bg-card">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary">
+              <svg className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="font-semibold text-foreground">My Complaints</h2>
+              <p className="text-sm text-muted-foreground">{complaints.length} total complaints</p>
+            </div>
+          </div>
+          <button
+            onClick={() => void loadData()}
+            className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
             Refresh
           </button>
         </div>
 
-        {loading ? <p className="mt-4 text-sm text-slate-600">Loading complaints...</p> : null}
+        <div className="p-6">
+          {complaints.length === 0 ? (
+            <div className="py-8 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-secondary">
+                <svg className="h-6 w-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="mt-3 font-medium text-foreground">No complaints filed</p>
+              <p className="mt-1 text-sm text-muted-foreground">You have not reported any issues yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {complaints.map((complaint) => {
+                const statusConfig = STATUS_CONFIG[complaint.status];
 
-        {!loading && complaints.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-600">No complaints raised yet.</p>
-        ) : null}
-
-        {!loading && complaints.length > 0 ? (
-          <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full border-collapse">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-sm text-slate-600">
-                  <th className="px-2 py-2 font-medium">Booking</th>
-                  <th className="px-2 py-2 font-medium">Message</th>
-                  <th className="px-2 py-2 font-medium">Status</th>
-                  <th className="px-2 py-2 font-medium">Created</th>
-                  <th className="px-2 py-2 font-medium">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {complaints.map((complaint) => (
-                  <tr key={complaint.id} className="border-b border-slate-100 align-top">
-                    <td className="px-2 py-3 text-sm text-slate-700">
-                      {bookingMap.get(complaint.bookingId)?.id ?? complaint.bookingId}
-                    </td>
-                    <td className="px-2 py-3 text-sm text-slate-800">{complaint.message}</td>
-                    <td className="px-2 py-3 text-sm">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[complaint.status]}`}>
-                        {complaint.status}
-                      </span>
-                    </td>
-                    <td className="px-2 py-3 text-sm text-slate-700">{new Date(complaint.createdAt).toLocaleString()}</td>
-                    <td className="px-2 py-3 text-sm">
-                      <Link href={`/caregiver/complaints/${complaint.id}`} className="font-medium text-blue-700">
-                        View
+                return (
+                  <div key={complaint.id} className="rounded-lg border border-border p-4 transition-colors hover:bg-secondary/30">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-foreground">
+                            Booking: {bookingMap.get(complaint.bookingId)?.id.slice(0, 8) ?? complaint.bookingId.slice(0, 8)}...
+                          </p>
+                          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusConfig.bg} ${statusConfig.text}`}>
+                            {statusConfig.label}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground line-clamp-2">{complaint.message}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Filed on {new Date(complaint.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Link
+                        href={`/caregiver/complaints/${complaint.id}`}
+                        className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+                      >
+                        View Details
                       </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : null}
-      </section>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

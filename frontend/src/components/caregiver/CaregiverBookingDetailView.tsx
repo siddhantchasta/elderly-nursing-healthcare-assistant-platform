@@ -9,12 +9,12 @@ import type { BookingItem } from "@/types/booking";
 import type { CareNoteItem } from "@/types/careNote";
 import type { ServiceItem } from "@/types/service";
 
-const STATUS_STYLES: Record<BookingItem["status"], string> = {
-  pending: "bg-amber-100 text-amber-800",
-  accepted: "bg-sky-100 text-sky-800",
-  rejected: "bg-rose-100 text-rose-800",
-  in_progress: "bg-indigo-100 text-indigo-800",
-  completed: "bg-emerald-100 text-emerald-800",
+const STATUS_CONFIG: Record<BookingItem["status"], { bg: string; text: string; label: string }> = {
+  pending: { bg: "bg-amber-50", text: "text-amber-700", label: "Pending" },
+  accepted: { bg: "bg-blue-50", text: "text-blue-700", label: "Accepted" },
+  rejected: { bg: "bg-red-50", text: "text-red-700", label: "Rejected" },
+  in_progress: { bg: "bg-purple-50", text: "text-purple-700", label: "In Progress" },
+  completed: { bg: "bg-green-50", text: "text-green-700", label: "Completed" },
 };
 
 export default function CaregiverBookingDetailView({ bookingId }: { bookingId: string }) {
@@ -92,7 +92,7 @@ export default function CaregiverBookingDetailView({ bookingId }: { bookingId: s
 
       await createCareNote(bookingId, noteText.trim());
       setNoteText("");
-      setSuccess("Care note added.");
+      setSuccess("Care note added successfully.");
       await loadDetail();
     } catch (err) {
       if (err instanceof ApiClientError) {
@@ -106,74 +106,181 @@ export default function CaregiverBookingDetailView({ bookingId }: { bookingId: s
   }
 
   if (loading) {
-    return <p className="text-sm text-slate-600">Loading booking detail...</p>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="mt-3 text-sm text-muted-foreground">Loading booking details...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!booking) {
-    return <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">Booking not found.</p>;
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
+        <svg className="mx-auto h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+        </svg>
+        <p className="mt-3 font-medium text-red-700">Booking not found</p>
+        <p className="mt-1 text-sm text-red-600">The booking you are looking for does not exist or you do not have access to it.</p>
+      </div>
+    );
   }
+
+  const statusConfig = STATUS_CONFIG[booking.status];
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
-        <div className="flex items-start justify-between gap-3">
-          <h2 className="text-xl font-semibold text-slate-900">Booking Details</h2>
-          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[booking.status]}`}>
-            {booking.status.replace("_", " ")}
+      {error && (
+        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+          <svg className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
+      {success && (
+        <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+          <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-sm text-green-700">{success}</p>
+        </div>
+      )}
+
+      {/* Booking Info Card */}
+      <div className="rounded-xl border border-border bg-card">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <h2 className="text-lg font-semibold text-foreground">Booking Information</h2>
+          <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusConfig.bg} ${statusConfig.text}`}>
+            {statusConfig.label}
           </span>
         </div>
 
-        {error ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-        {success ? <p className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{success}</p> : null}
+        <div className="p-6">
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Service</p>
+                <p className="mt-1 font-medium text-foreground">{service?.serviceName ?? "N/A"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Booking Type</p>
+                <p className="mt-1 font-medium text-foreground capitalize">{booking.bookingType.replace("_", " ")}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Patient ID</p>
+                <p className="mt-1 font-medium text-foreground">{booking.patientId}</p>
+              </div>
+            </div>
 
-        <div className="mt-4 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
-          <p><span className="font-medium">Service:</span> {service?.serviceName ?? booking.serviceId}</p>
-          <p><span className="font-medium">Patient:</span> {booking.patientId}</p>
-          <p><span className="font-medium">Booking Type:</span> {booking.bookingType.replace("_", " ")}</p>
-          <p><span className="font-medium">Scheduled At:</span> {new Date(booking.scheduledAt).toLocaleString()}</p>
-          <p><span className="font-medium">Status Updated At:</span> {new Date(booking.statusUpdatedAt).toLocaleString()}</p>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Scheduled Date</p>
+                <p className="mt-1 font-medium text-foreground">
+                  {new Date(booking.scheduledAt).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Scheduled Time</p>
+                <p className="mt-1 font-medium text-foreground">
+                  {new Date(booking.scheduledAt).toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Last Updated</p>
+                <p className="mt-1 font-medium text-foreground">
+                  {new Date(booking.statusUpdatedAt).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
 
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">Care Notes</h3>
-
-        {canAddNote ? (
-          <form className="mt-4 space-y-3" onSubmit={onSubmit}>
+      {/* Care Notes Section */}
+      <div className="rounded-xl border border-border bg-card">
+        <div className="border-b border-border px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <svg className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+            </div>
             <div>
-              <label htmlFor="note" className="mb-1 block text-sm font-medium text-slate-700">Add Note</label>
+              <h2 className="font-semibold text-foreground">Care Notes</h2>
+              <p className="text-sm text-muted-foreground">Document patient care and observations</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {canAddNote ? (
+            <form onSubmit={onSubmit} className="mb-6">
+              <label htmlFor="note" className="mb-2 block text-sm font-medium text-foreground">
+                Add a New Note
+              </label>
               <textarea
                 id="note"
                 rows={4}
                 value={noteText}
                 onChange={(event) => setNoteText(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
+                placeholder="Document patient condition, care provided, observations..."
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={submitting || !noteText.trim()}
+                  className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {submitting ? "Saving..." : "Add Note"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="mb-6 rounded-lg bg-secondary/50 px-4 py-3">
+              <p className="text-sm text-muted-foreground">
+                Care notes can be added once you accept the booking.
+              </p>
             </div>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white disabled:opacity-60"
-            >
-              {submitting ? "Saving..." : "Add Care Note"}
-            </button>
-          </form>
-        ) : (
-          <p className="mt-3 text-sm text-slate-600">Care notes are available after acceptance.</p>
-        )}
+          )}
 
-        {notes.length === 0 ? <p className="mt-4 text-sm text-slate-600">No care notes yet.</p> : null}
-        {notes.length > 0 ? (
-          <ul className="mt-4 space-y-3">
-            {notes.map((note) => (
-              <li key={note.id} className="rounded-lg border border-slate-200 p-3">
-                <p className="text-sm text-slate-800">{note.note}</p>
-                <p className="mt-1 text-xs text-slate-500">{new Date(note.createdAt).toLocaleString()}</p>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </section>
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-foreground">Previous Notes ({notes.length})</h3>
+            
+            {notes.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-border py-8 text-center">
+                <svg className="mx-auto h-8 w-8 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+                <p className="mt-2 text-sm text-muted-foreground">No care notes recorded yet</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {notes.map((note) => (
+                  <div key={note.id} className="rounded-lg border border-border bg-secondary/30 p-4">
+                    <p className="text-sm text-foreground">{note.note}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {new Date(note.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
