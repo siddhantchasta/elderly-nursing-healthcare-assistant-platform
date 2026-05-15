@@ -3,7 +3,7 @@ import AuthShell from "@/components/ui/AuthShell";
 
 export default function RegisterPage() {
   return (
-    <AuthShell title="Create account" subtitle="Register as user/family or caregiver.">
+    <AuthShell title="Create account" subtitle="Register as user/family or caregiver." type="register">
       <RegisterForm />
     </AuthShell>
   );
