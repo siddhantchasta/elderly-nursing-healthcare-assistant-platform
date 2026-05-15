@@ -70,14 +70,20 @@ export async function startNotificationsStream(callbacks: StreamCallbacks) {
     };
 
     void (async () => {
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        processChunk(decoder.decode(value, { stream: true }));
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          processChunk(decoder.decode(value, { stream: true }));
+        }
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          callbacks.onError?.("Live notifications stream disconnected");
+        }
       }
     })();
   } catch {
-    callbacks.onError?.("Live notifications stream disconnected");
+    callbacks.onError?.("Unable to establish live notifications stream");
   }
 
   return () => controller.abort();
