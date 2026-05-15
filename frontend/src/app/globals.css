@@ -1,13 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  --background: #eef2f7;
-  --foreground: #0f172a;
+  --background: #f7f5f2;
+  --foreground: #1a1a1a;
+  --primary: #2d5a47;
+  --primary-foreground: #ffffff;
+  --secondary: #f0ebe4;
+  --secondary-foreground: #1a1a1a;
+  --muted: #e8e4de;
+  --muted-foreground: #6b6b6b;
+  --accent: #c9a87c;
+  --accent-foreground: #1a1a1a;
+  --border: #d4d0c8;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -15,5 +37,5 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Poppins", "Segoe UI", sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
 }
