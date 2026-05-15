@@ -9,6 +9,8 @@ import type { BookingType } from "@/types/booking";
 import type { CaregiverListItem } from "@/types/caregiver";
 import type { PatientProfile } from "@/types/patient";
 import type { ServiceItem } from "@/types/service";
+import DashboardSection from "@/components/ui/DashboardSection";
+import { ud } from "@/lib/ui/user-dashboard";
 
 const BOOKING_TYPE_OPTIONS: { value: BookingType; label: string }[] = [
   { value: "hourly", label: "Hourly" },
@@ -120,28 +122,26 @@ export default function BookingRequestForm() {
   }
 
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">Create Booking Request</h2>
-        <button onClick={() => void loadPrerequisites()} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">
-          Refresh Data
-        </button>
-      </div>
-
-      {loadingData ? <p className="mt-4 text-sm text-slate-600">Loading patients, services, and caregivers...</p> : null}
-      {error ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-      {success ? <p className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{success}</p> : null}
+    <DashboardSection
+      title="Create booking request"
+      description="Select patient, service, caregiver, and schedule."
+      onRefresh={() => void loadPrerequisites()}
+      refreshLabel="Refresh data"
+    >
+      {loadingData ? <p className={ud.muted}>Loading patients, services, and caregivers...</p> : null}
+      {error ? <p className={ud.error}>{error}</p> : null}
+      {success ? <p className={ud.success}>{success}</p> : null}
 
       {!loadingData ? (
-        <form className="mt-5 space-y-4" onSubmit={onSubmit}>
+        <form className="mt-2 space-y-5" onSubmit={onSubmit}>
           <div>
-            <label htmlFor="patientId" className="mb-1 block text-sm font-medium text-slate-700">Patient Profile</label>
+            <label htmlFor="patientId" className={ud.label}>Patient Profile</label>
             <select
               id="patientId"
               required
               value={patientId}
               onChange={(event) => setPatientId(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
+              className={ud.select}
             >
               {patients.map((patient) => (
                 <option key={patient.id} value={patient.id}>Age {patient.age} - {patient.medicalNeeds.slice(0, 40)}</option>
@@ -150,31 +150,31 @@ export default function BookingRequestForm() {
           </div>
 
           <div>
-            <label htmlFor="serviceId" className="mb-1 block text-sm font-medium text-slate-700">Service</label>
+            <label htmlFor="serviceId" className={ud.label}>Service</label>
             <select
               id="serviceId"
               required
               value={serviceId}
               onChange={(event) => setServiceId(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
+              className={ud.select}
             >
               {services.map((service) => (
                 <option key={service.id} value={service.id}>{service.serviceName}</option>
               ))}
             </select>
             {selectedService ? (
-              <p className="mt-1 text-xs text-slate-600">{selectedService.duration} | Rs {selectedService.price}</p>
+              <p className="mt-2 text-sm text-[#6d7b76]">{selectedService.duration} · Rs {selectedService.price}</p>
             ) : null}
           </div>
 
           <div>
-            <label htmlFor="caregiverId" className="mb-1 block text-sm font-medium text-slate-700">Caregiver</label>
+            <label htmlFor="caregiverId" className={ud.label}>Caregiver</label>
             <select
               id="caregiverId"
               required
               value={caregiverId}
               onChange={(event) => setCaregiverId(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
+              className={ud.select}
             >
               {caregivers.map((caregiver) => (
                 <option key={caregiver.id} value={caregiver.id}>{caregiver.email} ({caregiver.rating.toFixed(1)})</option>
@@ -183,13 +183,13 @@ export default function BookingRequestForm() {
           </div>
 
           <div>
-            <label htmlFor="bookingType" className="mb-1 block text-sm font-medium text-slate-700">Booking Type</label>
+            <label htmlFor="bookingType" className={ud.label}>Booking Type</label>
             <select
               id="bookingType"
               required
               value={bookingType}
               onChange={(event) => setBookingType(event.target.value as BookingType)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
+              className={ud.select}
             >
               {BOOKING_TYPE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -198,26 +198,26 @@ export default function BookingRequestForm() {
           </div>
 
           <div>
-            <label htmlFor="scheduledAt" className="mb-1 block text-sm font-medium text-slate-700">Scheduled At</label>
+            <label htmlFor="scheduledAt" className={ud.label}>Scheduled At</label>
             <input
               id="scheduledAt"
               type="datetime-local"
               required
               value={scheduledAtLocal}
               onChange={(event) => setScheduledAtLocal(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
+              className={ud.input}
             />
           </div>
 
           <button
             type="submit"
             disabled={submitting || patients.length === 0 || services.length === 0 || caregivers.length === 0}
-            className="rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className={ud.btnPrimary}
           >
-            {submitting ? "Sending request..." : "Send Booking Request"}
+            {submitting ? "Sending request..." : "Send booking request"}
           </button>
         </form>
       ) : null}
-    </section>
+    </DashboardSection>
   );
 }

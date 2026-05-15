@@ -6,6 +6,8 @@ import { ApiClientError } from "@/lib/api/client";
 import { listCaregivers } from "@/lib/api/endpoints";
 import { getSessionUser } from "@/lib/auth/session";
 import type { CaregiverListItem } from "@/types/caregiver";
+import DashboardSection from "@/components/ui/DashboardSection";
+import { ud } from "@/lib/ui/user-dashboard";
 
 export default function CaregiversCatalog() {
   const router = useRouter();
@@ -46,36 +48,39 @@ export default function CaregiversCatalog() {
   }, [router, loadCaregivers]);
 
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">Verified Caregivers</h2>
-        <button onClick={() => void loadCaregivers()} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">
-          Refresh
-        </button>
-      </div>
-
-      {loading ? <p className="mt-4 text-sm text-slate-600">Loading caregivers...</p> : null}
-      {error ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
+    <DashboardSection
+      title="Verified caregivers"
+      description="Background-checked professionals available in your area."
+      onRefresh={() => void loadCaregivers()}
+    >
+      {loading ? <p className={ud.muted}>Loading caregivers...</p> : null}
+      {error ? <p className={ud.error}>{error}</p> : null}
 
       {!loading && !error && caregivers.length === 0 ? (
-        <p className="mt-4 text-sm text-slate-600">No verified caregivers available right now.</p>
+        <p className={ud.muted}>No verified caregivers available right now.</p>
       ) : null}
 
       {!loading && !error && caregivers.length > 0 ? (
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           {caregivers.map((caregiver) => (
-            <article key={caregiver.id} className="rounded-xl border border-slate-200 p-4">
-              <h3 className="text-lg font-semibold text-slate-900">{caregiver.email}</h3>
-              <p className="mt-1 text-sm text-slate-600">{caregiver.qualifications}</p>
+            <article key={caregiver.id} className={ud.cardMuted}>
+              <h3 className="text-lg font-semibold text-[#111111]">{caregiver.email}</h3>
+              <p className="mt-1 text-sm text-[#6d7b76]">{caregiver.qualifications}</p>
 
-              <div className="mt-3 space-y-1 text-sm text-slate-700">
-                <p><span className="font-medium">Rating:</span> {caregiver.rating.toFixed(1)} / 5</p>
-                <p><span className="font-medium">Service Areas:</span> {caregiver.serviceAreas.join(", ")}</p>
-              </div>
+              <dl className="mt-4 space-y-1.5 text-sm">
+                <div className="flex justify-between gap-2">
+                  <dt className="text-[#8ca09a]">Rating</dt>
+                  <dd className="font-semibold text-[#111111]">{caregiver.rating.toFixed(1)} / 5</dd>
+                </div>
+                <div>
+                  <dt className="text-[#8ca09a]">Service areas</dt>
+                  <dd className="mt-1 font-medium text-[#4b4b4b]">{caregiver.serviceAreas.join(", ")}</dd>
+                </div>
+              </dl>
             </article>
           ))}
         </div>
       ) : null}
-    </section>
+    </DashboardSection>
   );
 }

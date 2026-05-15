@@ -10,14 +10,8 @@ import type { BookingItem } from "@/types/booking";
 import type { CaregiverListItem } from "@/types/caregiver";
 import type { PatientProfile } from "@/types/patient";
 import type { ServiceItem } from "@/types/service";
-
-const STATUS_STYLES: Record<BookingItem["status"], string> = {
-  pending: "bg-amber-100 text-amber-800",
-  accepted: "bg-sky-100 text-sky-800",
-  rejected: "bg-rose-100 text-rose-800",
-  in_progress: "bg-indigo-100 text-indigo-800",
-  completed: "bg-emerald-100 text-emerald-800",
-};
+import DashboardSection from "@/components/ui/DashboardSection";
+import { BOOKING_STATUS_STYLES, ud } from "@/lib/ui/user-dashboard";
 
 const BOOKING_TYPE_LABELS: Record<BookingItem["bookingType"], string> = {
   hourly: "Hourly",
@@ -84,33 +78,30 @@ export default function BookingHistory() {
   const caregiverMap = useMemo(() => new Map(caregivers.map((c) => [c.id, c])), [caregivers]);
 
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">Booking History</h2>
-        <button onClick={() => void loadData()} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">
-          Refresh
-        </button>
-      </div>
-
-      {loading ? <p className="mt-4 text-sm text-slate-600">Loading bookings...</p> : null}
-      {error ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
+    <DashboardSection
+      title="Booking history"
+      description="All scheduled and completed visits for your household."
+      onRefresh={() => void loadData()}
+    >
+      {loading ? <p className={ud.muted}>Loading bookings...</p> : null}
+      {error ? <p className={ud.error}>{error}</p> : null}
 
       {!loading && !error && bookings.length === 0 ? (
-        <p className="mt-4 text-sm text-slate-600">No booking history found.</p>
+        <p className={ud.muted}>No bookings yet. Book care from the dashboard to get started.</p>
       ) : null}
 
       {!loading && !error && bookings.length > 0 ? (
-        <div className="mt-4 overflow-x-auto">
-          <table className="min-w-full border-collapse">
+        <div className={ud.tableWrap}>
+          <table className={ud.table}>
             <thead>
-              <tr className="border-b border-slate-200 text-left text-sm text-slate-600">
-                <th className="px-2 py-2 font-medium">Service</th>
-                <th className="px-2 py-2 font-medium">Caregiver</th>
-                <th className="px-2 py-2 font-medium">Patient</th>
-                <th className="px-2 py-2 font-medium">Type</th>
-                <th className="px-2 py-2 font-medium">Scheduled At</th>
-                <th className="px-2 py-2 font-medium">Status</th>
-                <th className="px-2 py-2 font-medium">Action</th>
+              <tr>
+                <th className={ud.th}>Service</th>
+                <th className={ud.th}>Caregiver</th>
+                <th className={ud.th}>Patient</th>
+                <th className={ud.th}>Type</th>
+                <th className={ud.th}>Scheduled</th>
+                <th className={ud.th}>Status</th>
+                <th className={ud.th}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -120,21 +111,19 @@ export default function BookingHistory() {
                 const patient = patientMap.get(booking.patientId);
 
                 return (
-                  <tr key={booking.id} className="border-b border-slate-100 align-top">
-                    <td className="px-2 py-3 text-sm text-slate-900">{serviceName}</td>
-                    <td className="px-2 py-3 text-sm text-slate-700">{caregiverEmail}</td>
-                    <td className="px-2 py-3 text-sm text-slate-700">
-                      {patient ? `Age ${patient.age}` : booking.patientId}
-                    </td>
-                    <td className="px-2 py-3 text-sm text-slate-700">{BOOKING_TYPE_LABELS[booking.bookingType]}</td>
-                    <td className="px-2 py-3 text-sm text-slate-700">{new Date(booking.scheduledAt).toLocaleString()}</td>
-                    <td className="px-2 py-3 text-sm">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[booking.status]}`}>
+                  <tr key={booking.id}>
+                    <td className={ud.tdStrong}>{serviceName}</td>
+                    <td className={ud.td}>{caregiverEmail}</td>
+                    <td className={ud.td}>{patient ? `Age ${patient.age}` : booking.patientId}</td>
+                    <td className={ud.td}>{BOOKING_TYPE_LABELS[booking.bookingType]}</td>
+                    <td className={ud.td}>{new Date(booking.scheduledAt).toLocaleString()}</td>
+                    <td className={ud.td}>
+                      <span className={`${ud.badge} ${BOOKING_STATUS_STYLES[booking.status]}`}>
                         {booking.status.replace("_", " ")}
                       </span>
                     </td>
-                    <td className="px-2 py-3 text-sm">
-                      <Link href={`/user/bookings/${booking.id}`} className="font-medium text-blue-700">
+                    <td className={ud.td}>
+                      <Link href={`/user/bookings/${booking.id}`} className={ud.linkAccent}>
                         View
                       </Link>
                     </td>
@@ -145,6 +134,6 @@ export default function BookingHistory() {
           </table>
         </div>
       ) : null}
-    </section>
+    </DashboardSection>
   );
 }

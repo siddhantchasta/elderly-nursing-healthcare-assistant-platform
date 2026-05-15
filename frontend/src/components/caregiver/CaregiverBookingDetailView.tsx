@@ -8,14 +8,7 @@ import { getSessionUser } from "@/lib/auth/session";
 import type { BookingItem } from "@/types/booking";
 import type { CareNoteItem } from "@/types/careNote";
 import type { ServiceItem } from "@/types/service";
-
-const STATUS_STYLES: Record<BookingItem["status"], string> = {
-  pending: "bg-amber-100 text-amber-800",
-  accepted: "bg-sky-100 text-sky-800",
-  rejected: "bg-rose-100 text-rose-800",
-  in_progress: "bg-indigo-100 text-indigo-800",
-  completed: "bg-emerald-100 text-emerald-800",
-};
+import { BOOKING_STATUS_STYLES, cd } from "@/lib/ui/caregiver-dashboard";
 
 export default function CaregiverBookingDetailView({ bookingId }: { bookingId: string }) {
   const router = useRouter();
@@ -106,69 +99,82 @@ export default function CaregiverBookingDetailView({ bookingId }: { bookingId: s
   }
 
   if (loading) {
-    return <p className="text-sm text-slate-600">Loading booking detail...</p>;
+    return <p className={cd.muted}>Loading booking detail...</p>;
   }
 
   if (!booking) {
-    return <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">Booking not found.</p>;
+    return <p className={cd.error}>Booking not found.</p>;
   }
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
+    <div className="space-y-8">
+      <section className={cd.card}>
         <div className="flex items-start justify-between gap-3">
-          <h2 className="text-xl font-semibold text-slate-900">Booking Details</h2>
-          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[booking.status]}`}>
+          <h2 className={cd.cardTitle}>Booking details</h2>
+          <span className={`${cd.badge} ${BOOKING_STATUS_STYLES[booking.status]}`}>
             {booking.status.replace("_", " ")}
           </span>
         </div>
 
-        {error ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-        {success ? <p className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{success}</p> : null}
+        {error ? <p className={`mt-4 ${cd.error}`}>{error}</p> : null}
+        {success ? <p className={`mt-4 ${cd.success}`}>{success}</p> : null}
 
-        <div className="mt-4 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
-          <p><span className="font-medium">Service:</span> {service?.serviceName ?? booking.serviceId}</p>
-          <p><span className="font-medium">Patient:</span> {booking.patientId}</p>
-          <p><span className="font-medium">Booking Type:</span> {booking.bookingType.replace("_", " ")}</p>
-          <p><span className="font-medium">Scheduled At:</span> {new Date(booking.scheduledAt).toLocaleString()}</p>
-          <p><span className="font-medium">Status Updated At:</span> {new Date(booking.statusUpdatedAt).toLocaleString()}</p>
-        </div>
+        <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
+          <div>
+            <dt className="text-[#8ca09a]">Service</dt>
+            <dd className="mt-1 font-medium text-[#111111]">{service?.serviceName ?? booking.serviceId}</dd>
+          </div>
+          <div>
+            <dt className="text-[#8ca09a]">Patient</dt>
+            <dd className="mt-1 font-medium text-[#111111]">{booking.patientId}</dd>
+          </div>
+          <div>
+            <dt className="text-[#8ca09a]">Booking type</dt>
+            <dd className="mt-1 font-medium text-[#111111]">{booking.bookingType.replace("_", " ")}</dd>
+          </div>
+          <div>
+            <dt className="text-[#8ca09a]">Scheduled at</dt>
+            <dd className="mt-1 font-medium text-[#111111]">{new Date(booking.scheduledAt).toLocaleString()}</dd>
+          </div>
+          <div>
+            <dt className="text-[#8ca09a]">Status updated</dt>
+            <dd className="mt-1 font-medium text-[#111111]">{new Date(booking.statusUpdatedAt).toLocaleString()}</dd>
+          </div>
+        </dl>
       </section>
 
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">Care Notes</h3>
+      <section className={cd.card}>
+        <h3 className={cd.cardTitle}>Care notes</h3>
 
         {canAddNote ? (
-          <form className="mt-4 space-y-3" onSubmit={onSubmit}>
+          <form className="mt-6 space-y-4 border-t border-[#e7e7e7] pt-6" onSubmit={onSubmit}>
             <div>
-              <label htmlFor="note" className="mb-1 block text-sm font-medium text-slate-700">Add Note</label>
+              <label htmlFor="note" className={cd.label}>
+                Add note
+              </label>
               <textarea
                 id="note"
                 rows={4}
                 value={noteText}
                 onChange={(event) => setNoteText(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
+                className={cd.textarea}
               />
             </div>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white disabled:opacity-60"
-            >
-              {submitting ? "Saving..." : "Add Care Note"}
+            <button type="submit" disabled={submitting} className={cd.btnPrimary}>
+              {submitting ? "Saving..." : "Add care note"}
             </button>
           </form>
         ) : (
-          <p className="mt-3 text-sm text-slate-600">Care notes are available after acceptance.</p>
+          <p className={`mt-4 ${cd.muted}`}>Care notes are available after acceptance.</p>
         )}
 
-        {notes.length === 0 ? <p className="mt-4 text-sm text-slate-600">No care notes yet.</p> : null}
+        {notes.length === 0 ? <p className={`mt-4 ${cd.muted}`}>No care notes yet.</p> : null}
         {notes.length > 0 ? (
           <ul className="mt-4 space-y-3">
             {notes.map((note) => (
-              <li key={note.id} className="rounded-lg border border-slate-200 p-3">
-                <p className="text-sm text-slate-800">{note.note}</p>
-                <p className="mt-1 text-xs text-slate-500">{new Date(note.createdAt).toLocaleString()}</p>
+              <li key={note.id} className={cd.cardMuted}>
+                <p className="text-sm text-[#4b4b4b]">{note.note}</p>
+                <p className="mt-2 text-xs text-[#8ca09a]">{new Date(note.createdAt).toLocaleString()}</p>
               </li>
             ))}
           </ul>

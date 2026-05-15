@@ -6,12 +6,7 @@ import { ApiClientError } from "@/lib/api/client";
 import { getComplaintById } from "@/lib/api/endpoints";
 import { getSessionUser } from "@/lib/auth/session";
 import type { ComplaintItem } from "@/types/complaint";
-
-const STATUS_STYLES: Record<ComplaintItem["status"], string> = {
-  open: "bg-amber-100 text-amber-800",
-  escalated: "bg-rose-100 text-rose-800",
-  resolved: "bg-emerald-100 text-emerald-800",
-};
+import { COMPLAINT_STATUS_STYLES, cd } from "@/lib/ui/caregiver-dashboard";
 
 export default function CaregiverComplaintDetailView({ complaintId }: { complaintId: string }) {
   const router = useRouter();
@@ -55,27 +50,43 @@ export default function CaregiverComplaintDetailView({ complaintId }: { complain
     return () => clearTimeout(timer);
   }, [router, loadComplaint]);
 
-  if (loading) return <p className="text-sm text-slate-600">Loading complaint detail...</p>;
-  if (error) return <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>;
-  if (!complaint) return <p className="text-sm text-slate-600">Complaint not found.</p>;
+  if (loading) return <p className={cd.muted}>Loading complaint detail...</p>;
+  if (error) return <p className={cd.error}>{error}</p>;
+  if (!complaint) return <p className={cd.muted}>Complaint not found.</p>;
 
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm">
+    <section className={cd.card}>
       <div className="flex items-start justify-between gap-3">
-        <h2 className="text-xl font-semibold text-slate-900">Complaint Information</h2>
-        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[complaint.status]}`}>
-          {complaint.status}
-        </span>
+        <h2 className={cd.cardTitle}>Complaint information</h2>
+        <span className={`${cd.badge} ${COMPLAINT_STATUS_STYLES[complaint.status]}`}>{complaint.status}</span>
       </div>
 
-      <div className="mt-4 space-y-3 text-sm text-slate-700">
-        <p><span className="font-medium">Complaint ID:</span> {complaint.id}</p>
-        <p><span className="font-medium">Booking ID:</span> {complaint.bookingId}</p>
-        <p><span className="font-medium">Raised By:</span> {complaint.raisedByRole}</p>
-        <p><span className="font-medium">Message:</span> {complaint.message}</p>
-        <p><span className="font-medium">Created At:</span> {new Date(complaint.createdAt).toLocaleString()}</p>
-        <p><span className="font-medium">Updated At:</span> {new Date(complaint.updatedAt).toLocaleString()}</p>
-      </div>
+      <dl className="mt-6 space-y-4 text-sm">
+        <div>
+          <dt className="text-[#8ca09a]">Complaint ID</dt>
+          <dd className="mt-1 font-medium text-[#111111]">{complaint.id}</dd>
+        </div>
+        <div>
+          <dt className="text-[#8ca09a]">Booking ID</dt>
+          <dd className="mt-1 font-medium text-[#111111]">{complaint.bookingId}</dd>
+        </div>
+        <div>
+          <dt className="text-[#8ca09a]">Raised by</dt>
+          <dd className="mt-1 font-medium text-[#111111]">{complaint.raisedByRole}</dd>
+        </div>
+        <div>
+          <dt className="text-[#8ca09a]">Message</dt>
+          <dd className="mt-1 leading-relaxed text-[#4b4b4b]">{complaint.message}</dd>
+        </div>
+        <div>
+          <dt className="text-[#8ca09a]">Created at</dt>
+          <dd className="mt-1 font-medium text-[#111111]">{new Date(complaint.createdAt).toLocaleString()}</dd>
+        </div>
+        <div>
+          <dt className="text-[#8ca09a]">Updated at</dt>
+          <dd className="mt-1 font-medium text-[#111111]">{new Date(complaint.updatedAt).toLocaleString()}</dd>
+        </div>
+      </dl>
     </section>
   );
 }

@@ -6,6 +6,8 @@ import { ApiClientError } from "@/lib/api/client";
 import { listServices } from "@/lib/api/endpoints";
 import { getSessionUser } from "@/lib/auth/session";
 import type { ServiceItem } from "@/types/service";
+import DashboardSection from "@/components/ui/DashboardSection";
+import { ud } from "@/lib/ui/user-dashboard";
 
 const CATEGORY_LABELS: Record<ServiceItem["category"], string> = {
   nursing_care: "Nursing Care",
@@ -66,38 +68,46 @@ export default function ServicesCatalog() {
   }, [router, loadServices]);
 
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">Available Services</h2>
-        <button onClick={() => void loadServices()} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">
-          Refresh
-        </button>
-      </div>
-
-      {loading ? <p className="mt-4 text-sm text-slate-600">Loading services...</p> : null}
-      {error ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
+    <DashboardSection
+      title="Available services"
+      description="Professional care options for home and recovery support."
+      onRefresh={() => void loadServices()}
+    >
+      {loading ? <p className={ud.muted}>Loading services...</p> : null}
+      {error ? <p className={ud.error}>{error}</p> : null}
 
       {!loading && !error && services.length === 0 ? (
-        <p className="mt-4 text-sm text-slate-600">No services available right now.</p>
+        <p className={ud.muted}>No services available right now.</p>
       ) : null}
 
       {!loading && !error && services.length > 0 ? (
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           {orderedServices.map((service) => (
-            <article key={service.id} className="rounded-xl border border-slate-200 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-blue-700">{CATEGORY_LABELS[service.category]}</p>
-              <h3 className="mt-1 text-lg font-semibold text-slate-900">{service.serviceName}</h3>
-              <p className="mt-2 text-sm text-slate-600">{service.description}</p>
+            <article key={service.id} className={ud.cardMuted}>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4a6b5c]">
+                {CATEGORY_LABELS[service.category]}
+              </p>
+              <h3 className="mt-2 text-lg font-semibold text-[#111111]">{service.serviceName}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-[#6d7b76]">{service.description}</p>
 
-              <div className="mt-3 space-y-1 text-sm text-slate-700">
-                <p><span className="font-medium">Duration:</span> {service.duration}</p>
-                <p><span className="font-medium">Price:</span> Rs {service.price}</p>
-                <p><span className="font-medium">Required Qualification:</span> {service.requiredQualification}</p>
-              </div>
+              <dl className="mt-4 space-y-1.5 text-sm text-[#4b4b4b]">
+                <div className="flex justify-between gap-2">
+                  <dt className="text-[#8ca09a]">Duration</dt>
+                  <dd className="font-medium text-[#111111]">{service.duration}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-[#8ca09a]">Price</dt>
+                  <dd className="font-medium text-[#111111]">Rs {service.price}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-[#8ca09a]">Qualification</dt>
+                  <dd className="text-right font-medium text-[#111111]">{service.requiredQualification}</dd>
+                </div>
+              </dl>
             </article>
           ))}
         </div>
       ) : null}
-    </section>
+    </DashboardSection>
   );
 }

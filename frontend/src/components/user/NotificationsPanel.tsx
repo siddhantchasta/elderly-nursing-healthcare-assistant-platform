@@ -7,20 +7,8 @@ import { listUserNotifications } from "@/lib/api/endpoints";
 import { getSessionUser } from "@/lib/auth/session";
 import { startNotificationsStream } from "@/lib/notifications/stream";
 import type { BookingStatusUpdateItem, ComplaintStatusUpdateItem } from "@/types/notification";
-
-const BOOKING_STATUS_STYLES: Record<BookingStatusUpdateItem["status"], string> = {
-  pending: "bg-amber-100 text-amber-800",
-  accepted: "bg-sky-100 text-sky-800",
-  rejected: "bg-rose-100 text-rose-800",
-  in_progress: "bg-indigo-100 text-indigo-800",
-  completed: "bg-emerald-100 text-emerald-800",
-};
-
-const COMPLAINT_STATUS_STYLES: Record<ComplaintStatusUpdateItem["status"], string> = {
-  open: "bg-amber-100 text-amber-800",
-  escalated: "bg-rose-100 text-rose-800",
-  resolved: "bg-emerald-100 text-emerald-800",
-};
+import DashboardSection from "@/components/ui/DashboardSection";
+import { BOOKING_STATUS_STYLES, COMPLAINT_STATUS_STYLES, ud } from "@/lib/ui/user-dashboard";
 
 export default function NotificationsPanel() {
   const router = useRouter();
@@ -98,65 +86,63 @@ export default function NotificationsPanel() {
   );
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-slate-900">Live Notifications</h2>
-          <div className="flex items-center gap-3">
-            <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${liveConnected ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>
-              {liveConnected ? "Live connected" : "Snapshot mode"}
-            </span>
-            <button onClick={() => void loadSnapshot()} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">
-              Refresh
-            </button>
-          </div>
-        </div>
+    <div className="space-y-8">
+      <DashboardSection
+        title="Live notifications"
+        description="Real-time booking and complaint status updates."
+        onRefresh={() => void loadSnapshot()}
+      >
+        <span
+          className={`${ud.badge} ${
+            liveConnected ? "bg-[#e8f0ec] text-[#3d6b55]" : "bg-[#f0f0ee] text-[#6d7b76]"
+          }`}
+        >
+          {liveConnected ? "Live connected" : "Snapshot mode"}
+        </span>
 
-        {loading ? <p className="mt-4 text-sm text-slate-600">Loading notifications...</p> : null}
-        {error ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-        {!loading && !error && hasNoUpdates ? <p className="mt-4 text-sm text-slate-600">No notifications yet.</p> : null}
-      </section>
+        {loading ? <p className={`mt-4 ${ud.muted}`}>Loading notifications...</p> : null}
+        {error ? <p className={`mt-4 ${ud.error}`}>{error}</p> : null}
+        {!loading && !error && hasNoUpdates ? (
+          <p className={`mt-4 ${ud.muted}`}>No notifications yet. Updates will appear here when booking status changes.</p>
+        ) : null}
+      </DashboardSection>
 
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">Booking Updates</h3>
-        {bookingUpdates.length === 0 ? <p className="mt-3 text-sm text-slate-600">No booking updates.</p> : null}
+      <DashboardSection title="Booking updates">
+        {bookingUpdates.length === 0 ? <p className={ud.muted}>No booking updates.</p> : null}
         {bookingUpdates.length > 0 ? (
-          <ul className="mt-3 space-y-3">
+          <ul className="space-y-3">
             {bookingUpdates.map((item) => (
-              <li key={item.bookingId} className="rounded-lg border border-slate-200 p-3">
+              <li key={item.bookingId} className={ud.cardMuted}>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm text-slate-800">Booking: {item.bookingId}</p>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${BOOKING_STATUS_STYLES[item.status]}`}>
+                  <p className="text-sm font-medium text-[#111111]">Booking {item.bookingId}</p>
+                  <span className={`${ud.badge} ${BOOKING_STATUS_STYLES[item.status]}`}>
                     {item.status.replace("_", " ")}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-slate-500">Scheduled: {new Date(item.scheduledAt).toLocaleString()}</p>
+                <p className="mt-2 text-xs text-[#8ca09a]">Scheduled: {new Date(item.scheduledAt).toLocaleString()}</p>
               </li>
             ))}
           </ul>
         ) : null}
-      </section>
+      </DashboardSection>
 
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">Complaint Updates</h3>
-        {complaintUpdates.length === 0 ? <p className="mt-3 text-sm text-slate-600">No complaint updates.</p> : null}
+      <DashboardSection title="Complaint updates">
+        {complaintUpdates.length === 0 ? <p className={ud.muted}>No complaint updates.</p> : null}
         {complaintUpdates.length > 0 ? (
-          <ul className="mt-3 space-y-3">
+          <ul className="space-y-3">
             {complaintUpdates.map((item) => (
-              <li key={item.complaintId} className="rounded-lg border border-slate-200 p-3">
+              <li key={item.complaintId} className={ud.cardMuted}>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm text-slate-800">Complaint: {item.complaintId}</p>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${COMPLAINT_STATUS_STYLES[item.status]}`}>
-                    {item.status}
-                  </span>
+                  <p className="text-sm font-medium text-[#111111]">Complaint {item.complaintId}</p>
+                  <span className={`${ud.badge} ${COMPLAINT_STATUS_STYLES[item.status]}`}>{item.status}</span>
                 </div>
-                <p className="mt-1 text-sm text-slate-700">{item.message}</p>
-                <p className="mt-1 text-xs text-slate-500">Updated: {new Date(item.updatedAt).toLocaleString()}</p>
+                <p className="mt-2 text-sm text-[#4b4b4b]">{item.message}</p>
+                <p className="mt-2 text-xs text-[#8ca09a]">Updated: {new Date(item.updatedAt).toLocaleString()}</p>
               </li>
             ))}
           </ul>
         ) : null}
-      </section>
+      </DashboardSection>
     </div>
   );
 }

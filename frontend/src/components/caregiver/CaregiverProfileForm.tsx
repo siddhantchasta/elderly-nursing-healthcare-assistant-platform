@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { CheckCircle2, MapPin, Star } from "lucide-react";
 import { ApiClientError } from "@/lib/api/client";
 import {
   createCaregiverProfile,
@@ -10,14 +11,10 @@ import {
   updateCaregiverProfile,
 } from "@/lib/api/endpoints";
 import { getSessionUser } from "@/lib/auth/session";
+import { cd, VERIFICATION_STYLES } from "@/lib/ui/caregiver-dashboard";
 import type { CaregiverProfile } from "@/types/caregiver";
 import type { ServiceItem } from "@/types/service";
-
-const VERIFICATION_STYLES: Record<CaregiverProfile["verificationStatus"], string> = {
-  pending: "bg-amber-100 text-amber-800",
-  verified: "bg-emerald-100 text-emerald-800",
-  rejected: "bg-rose-100 text-rose-800",
-};
+import DashboardSection from "@/components/ui/DashboardSection";
 
 function parseList(input: string) {
   return input
@@ -155,105 +152,159 @@ export default function CaregiverProfileForm() {
     }
   }
 
+  const stats = profile
+    ? [
+        { label: "Rating", value: profile.rating.toFixed(1), icon: Star },
+        { label: "Service areas", value: String(profile.serviceAreas.length), icon: MapPin },
+        { label: "Services", value: String(selectedServiceIds.length), icon: CheckCircle2 },
+      ]
+    : [];
+
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold text-slate-900">Caregiver Profile</h2>
-          <p className="mt-1 text-sm text-slate-600">Update qualifications, availability, and service coverage.</p>
-        </div>
-        {profile ? (
-          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${VERIFICATION_STYLES[profile.verificationStatus]}`}>
-            {profile.verificationStatus}
-          </span>
-        ) : null}
-      </div>
-
-      {loading ? <p className="mt-4 text-sm text-slate-600">Loading profile...</p> : null}
-      {error ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-      {success ? <p className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{success}</p> : null}
-
-      {!loading ? (
-        <form className="mt-5 space-y-4" onSubmit={onSubmit}>
-          <div>
-            <label htmlFor="qualifications" className="mb-1 block text-sm font-medium text-slate-700">Qualifications</label>
-            <input
-              id="qualifications"
-              type="text"
-              value={qualifications}
-              onChange={(event) => setQualifications(event.target.value)}
-              disabled={hasProfile}
-              placeholder="RN, Geriatric care, physiotherapy"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 disabled:bg-slate-100"
-            />
-            {hasProfile ? (
-              <p className="mt-1 text-xs text-slate-500">Qualifications are set during profile creation.</p>
-            ) : null}
-          </div>
-
-          <div>
-            <label htmlFor="serviceAreas" className="mb-1 block text-sm font-medium text-slate-700">Service Areas</label>
-            <textarea
-              id="serviceAreas"
-              rows={3}
-              value={serviceAreasText}
-              onChange={(event) => setServiceAreasText(event.target.value)}
-              placeholder="Colombo 03, Colombo 05"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
-            />
-            <p className="mt-1 text-xs text-slate-500">Separate areas with commas.</p>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Services Offered</label>
-            {services.length === 0 ? (
-              <p className="text-sm text-slate-600">No services available yet.</p>
-            ) : (
-              <div className="grid gap-2 sm:grid-cols-2">
-                {services.map((service) => (
-                  <label key={service.id} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={selectedServiceIds.includes(service.id)}
-                      onChange={() => toggleService(service.id)}
-                      className="h-4 w-4"
-                    />
-                    <span className="text-slate-700">{service.serviceName}</span>
-                  </label>
-                ))}
+    <div className="space-y-6">
+      {profile ? (
+        <div className="grid gap-4 sm:grid-cols-3">
+          {stats.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <div key={stat.label} className={cd.kpiCard}>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#dfe9e5]">
+                    <Icon className="h-[18px] w-[18px] text-[#4a6b5c]" aria-hidden />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8ca09a]">
+                      {stat.label}
+                    </p>
+                    <p className="mt-0.5 text-2xl font-black tracking-tight text-[#111111]">{stat.value}</p>
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3">
-            <input
-              id="isAvailable"
-              type="checkbox"
-              checked={isAvailable}
-              onChange={(event) => setIsAvailable(event.target.checked)}
-              className="h-4 w-4"
-            />
-            <label htmlFor="isAvailable" className="text-sm font-medium text-slate-700">Available for new bookings</label>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {submitting ? "Saving..." : hasProfile ? "Update Profile" : "Create Profile"}
-            </button>
-            <button
-              type="button"
-              onClick={() => void loadData()}
-              className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm"
-            >
-              Refresh
-            </button>
-          </div>
-        </form>
+            );
+          })}
+        </div>
       ) : null}
-    </section>
+
+      <DashboardSection
+        title={hasProfile ? "Professional profile" : "Create your profile"}
+        description={
+          hasProfile
+            ? "Keep your availability and coverage up to date so families can find you."
+            : "Tell families about your qualifications and where you provide care."
+        }
+        onRefresh={loading ? undefined : () => void loadData()}
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          {profile ? (
+            <span className={`${cd.badge} ${VERIFICATION_STYLES[profile.verificationStatus]}`}>
+              {profile.verificationStatus}
+            </span>
+          ) : (
+            <span className={`${cd.badge} bg-[#f5efe6] text-[#8a6d3b]`}>Not submitted</span>
+          )}
+          {profile?.isAvailable ? (
+            <span className={`${cd.badge} bg-[#e8f0ec] text-[#3d6b55]`}>Available</span>
+          ) : profile ? (
+            <span className={`${cd.badge} bg-[#f0f0ee] text-[#6d7b76]`}>Unavailable</span>
+          ) : null}
+        </div>
+
+        {loading ? <p className={cd.muted}>Loading profile...</p> : null}
+        {error ? <p className={`mt-4 ${cd.error}`}>{error}</p> : null}
+        {success ? <p className={`mt-4 ${cd.success}`}>{success}</p> : null}
+
+        {!loading ? (
+          <form className="mt-8 space-y-8" onSubmit={onSubmit}>
+            
+              <div>
+                <label htmlFor="qualifications" className={cd.label}>
+                  Qualifications
+                </label>
+                <input
+                  id="qualifications"
+                  type="text"
+                  value={qualifications}
+                  onChange={(event) => setQualifications(event.target.value)}
+                  disabled={hasProfile}
+                  placeholder="RN, Geriatric care, physiotherapy"
+                  className={cd.input}
+                />
+                {hasProfile ? (
+                  <p className="mt-2 text-xs text-[#8ca09a]">Qualifications are set during profile creation.</p>
+                ) : null}
+              </div>
+
+              <div>
+                <label htmlFor="serviceAreas" className={cd.label}>
+                  Service areas
+                </label>
+                <textarea
+                  id="serviceAreas"
+                  rows={3}
+                  value={serviceAreasText}
+                  onChange={(event) => setServiceAreasText(event.target.value)}
+                  placeholder="Colombo 03, Colombo 05"
+                  className={cd.textarea}
+                />
+                <p className="mt-2 text-xs text-[#8ca09a]">Separate areas with commas.</p>
+              </div>
+
+              <div>
+                <label className={cd.label}>Services offered</label>
+                {services.length === 0 ? (
+                  <p className={cd.muted}>No services available yet.</p>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {services.map((service) => (
+                      <label key={service.id} className={cd.serviceChip}>
+                        <input
+                          type="checkbox"
+                          checked={selectedServiceIds.includes(service.id)}
+                          onChange={() => toggleService(service.id)}
+                          className="mt-0.5 h-4 w-4 rounded border-[#d8d8d8] text-[#ff6a3d] focus:ring-[#ff6a3d]"
+                        />
+                        <span className="text-sm font-medium text-[#111111]">{service.serviceName}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <label
+                htmlFor="isAvailable"
+                className={`flex cursor-pointer items-center justify-between gap-4 rounded-[20px] border p-5 transition ${
+                  isAvailable ? "border-[#cad5d2] bg-[#eef5f2]" : "border-[#e7e7e7] bg-[#fafaf8]"
+                }`}
+              >
+                <div>
+                  <p className="text-sm font-semibold text-[#111111]">Available for new bookings</p>
+                  <p className="mt-0.5 text-sm text-[#6d7b76]">
+                    {isAvailable
+                      ? "Families can request visits while you are marked available."
+                      : "You will not receive new booking requests."}
+                  </p>
+                </div>
+                <input
+                  id="isAvailable"
+                  type="checkbox"
+                  checked={isAvailable}
+                  onChange={(event) => setIsAvailable(event.target.checked)}
+                  className="h-5 w-5 rounded border-[#d8d8d8] text-[#ff6a3d] focus:ring-[#ff6a3d]"
+                />
+              </label>
+
+              <div className="flex flex-wrap gap-3 border-t border-[#e7e7e7] pt-6">
+                <button type="submit" disabled={submitting} className={cd.btnPrimary}>
+                  {submitting ? "Saving..." : hasProfile ? "Update profile" : "Create profile"}
+                </button>
+                <button type="button" onClick={() => void loadData()} className={cd.btnSecondary}>
+                  Refresh
+                </button>
+              </div>
+            </form>
+        ) : null}
+      </DashboardSection>
+    </div>
   );
 }
+

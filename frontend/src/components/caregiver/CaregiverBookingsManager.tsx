@@ -6,16 +6,10 @@ import { useRouter } from "next/navigation";
 import { ApiClientError } from "@/lib/api/client";
 import { listBookings, listServices, updateBookingDecision, updateBookingStatus } from "@/lib/api/endpoints";
 import { getSessionUser } from "@/lib/auth/session";
+import DashboardSection from "@/components/ui/DashboardSection";
+import { BOOKING_STATUS_STYLES, cd } from "@/lib/ui/caregiver-dashboard";
 import type { BookingItem } from "@/types/booking";
 import type { ServiceItem } from "@/types/service";
-
-const STATUS_STYLES: Record<BookingItem["status"], string> = {
-  pending: "bg-amber-100 text-amber-800",
-  accepted: "bg-sky-100 text-sky-800",
-  rejected: "bg-rose-100 text-rose-800",
-  in_progress: "bg-indigo-100 text-indigo-800",
-  completed: "bg-emerald-100 text-emerald-800",
-};
 
 const BOOKING_TYPE_LABELS: Record<BookingItem["bookingType"], string> = {
   hourly: "Hourly",
@@ -118,36 +112,30 @@ export default function CaregiverBookingsManager() {
   }
 
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold text-slate-900">Booking Requests & History</h2>
-          <p className="mt-1 text-sm text-slate-600">Review incoming requests and update job status.</p>
-        </div>
-        <button onClick={() => void loadData()} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">
-          Refresh
-        </button>
-      </div>
-
-      {loading ? <p className="mt-4 text-sm text-slate-600">Loading bookings...</p> : null}
-      {error ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-      {success ? <p className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{success}</p> : null}
+    <DashboardSection
+      title="Booking requests & history"
+      description="Review incoming requests and update job status."
+      onRefresh={() => void loadData()}
+    >
+      {loading ? <p className={cd.muted}>Loading bookings...</p> : null}
+      {error ? <p className={cd.error}>{error}</p> : null}
+      {success ? <p className={cd.success}>{success}</p> : null}
 
       {!loading && bookings.length === 0 ? (
-        <p className="mt-4 text-sm text-slate-600">No bookings assigned yet.</p>
+        <p className={cd.muted}>No bookings assigned yet.</p>
       ) : null}
 
       {!loading && bookings.length > 0 ? (
-        <div className="mt-4 overflow-x-auto">
-          <table className="min-w-full border-collapse">
+        <div className={cd.tableWrap}>
+          <table className={cd.table}>
             <thead>
-              <tr className="border-b border-slate-200 text-left text-sm text-slate-600">
-                <th className="px-2 py-2 font-medium">Booking</th>
-                <th className="px-2 py-2 font-medium">Service</th>
-                <th className="px-2 py-2 font-medium">Type</th>
-                <th className="px-2 py-2 font-medium">Scheduled</th>
-                <th className="px-2 py-2 font-medium">Status</th>
-                <th className="px-2 py-2 font-medium">Actions</th>
+              <tr>
+                <th className={cd.th}>Booking</th>
+                <th className={cd.th}>Service</th>
+                <th className={cd.th}>Type</th>
+                <th className={cd.th}>Scheduled</th>
+                <th className={cd.th}>Status</th>
+                <th className={cd.th}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -156,58 +144,60 @@ export default function CaregiverBookingsManager() {
                 const isBusy = actionId === booking.id;
 
                 return (
-                  <tr key={booking.id} className="border-b border-slate-100 align-top">
-                    <td className="px-2 py-3 text-sm text-slate-700">{booking.id}</td>
-                    <td className="px-2 py-3 text-sm text-slate-800">{serviceName}</td>
-                    <td className="px-2 py-3 text-sm text-slate-700">{BOOKING_TYPE_LABELS[booking.bookingType]}</td>
-                    <td className="px-2 py-3 text-sm text-slate-700">{new Date(booking.scheduledAt).toLocaleString()}</td>
-                    <td className="px-2 py-3 text-sm">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[booking.status]}`}>
+                  <tr key={booking.id}>
+                    <td className={cd.td}>{booking.id}</td>
+                    <td className={cd.tdStrong}>{serviceName}</td>
+                    <td className={cd.td}>{BOOKING_TYPE_LABELS[booking.bookingType]}</td>
+                    <td className={cd.td}>{new Date(booking.scheduledAt).toLocaleString()}</td>
+                    <td className={cd.td}>
+                      <span className={`${cd.badge} ${BOOKING_STATUS_STYLES[booking.status]}`}>
                         {booking.status.replace("_", " ")}
                       </span>
                     </td>
-                    <td className="px-2 py-3 text-sm">
+                    <td className={cd.td}>
                       <div className="flex flex-wrap gap-2">
-                        <Link href={`/caregiver/bookings/${booking.id}`} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700">
+                        <Link href={`/caregiver/bookings/${booking.id}`} className={cd.btnGhost}>
                           View
                         </Link>
-                        <Link href="/caregiver/complaints" className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-700">
-                          Report Issue
+                        <Link href="/caregiver/complaints" className={cd.btnDanger}>
+                          Report
                         </Link>
                         {booking.status === "pending" ? (
                           <>
                             <button
+                              type="button"
                               onClick={() => void handleDecision(booking.id, "accepted")}
                               disabled={isBusy}
-                              className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                              className={cd.btnSuccess}
                             >
                               Accept
                             </button>
                             <button
+                              type="button"
                               onClick={() => void handleDecision(booking.id, "rejected")}
                               disabled={isBusy}
-                              className="rounded-lg border border-rose-300 px-3 py-1.5 text-xs font-medium text-rose-700 disabled:opacity-60"
+                              className={cd.btnDanger}
                             >
                               Reject
                             </button>
                           </>
                         ) : null}
-
                         {booking.status === "accepted" ? (
                           <button
+                            type="button"
                             onClick={() => void handleStatusUpdate(booking.id, "in_progress")}
                             disabled={isBusy}
-                            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                            className={cd.btnPrimary}
                           >
                             Start
                           </button>
                         ) : null}
-
                         {booking.status === "in_progress" ? (
                           <button
+                            type="button"
                             onClick={() => void handleStatusUpdate(booking.id, "completed")}
                             disabled={isBusy}
-                            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                            className={cd.btnSuccess}
                           >
                             Complete
                           </button>
@@ -221,6 +211,6 @@ export default function CaregiverBookingsManager() {
           </table>
         </div>
       ) : null}
-    </section>
+    </DashboardSection>
   );
 }

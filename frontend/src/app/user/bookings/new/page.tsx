@@ -1,19 +1,14 @@
-import Link from "next/link";
+import UserPageHeader from "@/components/layout/UserPageHeader";
 import BookingRequestForm from "@/components/user/BookingRequestForm";
 
 export default function NewBookingPage() {
   return (
-    <main className="min-h-screen bg-slate-100 p-6 sm:p-8">
-      <div className="mx-auto max-w-4xl">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-slate-900">New Booking</h1>
-          <Link href="/user/dashboard" className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700">
-            Back to Dashboard
-          </Link>
-        </div>
-
-        <BookingRequestForm />
-      </div>
-    </main>
+    <div className="mx-auto max-w-4xl">
+      <UserPageHeader
+        title="Book care"
+        description="Choose a patient, service, caregiver, and schedule — we’ll handle the rest."
+      />
+      <BookingRequestForm />
+    </div>
   );
 }
