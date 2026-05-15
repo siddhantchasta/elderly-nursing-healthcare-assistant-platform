@@ -12,7 +12,7 @@ import type { ComplaintItem } from "@/types/complaint";
 const STATUS_STYLES: Record<ComplaintItem["status"], string> = {
   open: "bg-amber-100 text-amber-800",
   escalated: "bg-rose-100 text-rose-800",
-  resolved: "bg-emerald-100 text-emerald-800",
+  resolved: "bg-green-100 text-green-800",
 };
 
 export default function ComplaintsManager() {
@@ -79,13 +79,13 @@ export default function ComplaintsManager() {
 
     try {
       if (!bookingId || !message.trim()) {
-        setError("Booking and complaint message are required.");
+        setError("Please select a booking and describe your concern.");
         return;
       }
 
       await createComplaint({ bookingId, message: message.trim() });
       setMessage("");
-      setSuccess("Complaint submitted successfully.");
+      setSuccess("Your concern has been submitted. Our team will review it shortly.");
       await loadData();
     } catch (err) {
       if (err instanceof ApiClientError) {
@@ -98,110 +98,140 @@ export default function ComplaintsManager() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-8 text-center">
+        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <p className="mt-3 text-sm text-muted-foreground">Loading support center...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-slate-900">Raise Complaint</h2>
-        <p className="mt-1 text-sm text-slate-600">Report issues for a booking.</p>
+      {/* Submit new complaint */}
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold text-foreground">Report a Concern</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Have an issue with a booking or care service? Let us know and we&apos;ll help resolve it.
+        </p>
 
-        {error ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-        {success ? <p className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{success}</p> : null}
+        {error && (
+          <div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            {success}
+          </div>
+        )}
 
-        {!loading ? (
+        {bookings.length === 0 ? (
+          <div className="mt-4 rounded-lg bg-secondary/50 p-4 text-center">
+            <p className="text-sm text-muted-foreground">You need an active booking to submit a concern.</p>
+          </div>
+        ) : (
           <form className="mt-5 space-y-4" onSubmit={onSubmit}>
             <div>
-              <label htmlFor="bookingId" className="mb-1 block text-sm font-medium text-slate-700">Booking</label>
+              <label htmlFor="bookingId" className="mb-1.5 block text-sm font-medium text-foreground">
+                Related Booking
+              </label>
               <select
                 id="bookingId"
                 required
                 value={bookingId}
                 onChange={(event) => setBookingId(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
+                className="w-full rounded-lg border border-border bg-card px-4 py-3 text-foreground outline-none transition-colors focus:border-primary"
               >
                 {bookings.map((booking) => (
                   <option key={booking.id} value={booking.id}>
-                    {booking.id} ({booking.status})
+                    {booking.id.slice(0, 8)}... ({booking.status})
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label htmlFor="message" className="mb-1 block text-sm font-medium text-slate-700">Complaint Message</label>
+              <label htmlFor="message" className="mb-1.5 block text-sm font-medium text-foreground">
+                Describe Your Concern
+              </label>
               <textarea
                 id="message"
                 required
                 rows={4}
                 value={message}
+                placeholder="Please provide details about your concern..."
                 onChange={(event) => setMessage(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
+                className="w-full rounded-lg border border-border bg-card px-4 py-3 text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary"
               />
             </div>
 
             <button
               type="submit"
               disabled={submitting || bookings.length === 0}
-              className="rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white disabled:opacity-60"
+              className="rounded-lg bg-primary px-5 py-2.5 font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
             >
-              {submitting ? "Submitting..." : "Submit Complaint"}
+              {submitting ? "Submitting..." : "Submit Concern"}
             </button>
           </form>
-        ) : (
-          <p className="mt-4 text-sm text-slate-600">Loading booking options...</p>
         )}
-      </section>
+      </div>
 
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
+      {/* Existing complaints */}
+      <div className="rounded-xl border border-border bg-card p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-slate-900">My Complaints</h2>
-          <button onClick={() => void loadData()} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">My Submitted Issues</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Track the status of your reported concerns.</p>
+          </div>
+          <button
+            onClick={() => void loadData()}
+            className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
             Refresh
           </button>
         </div>
 
-        {loading ? <p className="mt-4 text-sm text-slate-600">Loading complaints...</p> : null}
-
-        {!loading && complaints.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-600">No complaints raised yet.</p>
-        ) : null}
-
-        {!loading && complaints.length > 0 ? (
-          <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full border-collapse">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-sm text-slate-600">
-                  <th className="px-2 py-2 font-medium">Booking</th>
-                  <th className="px-2 py-2 font-medium">Message</th>
-                  <th className="px-2 py-2 font-medium">Status</th>
-                  <th className="px-2 py-2 font-medium">Created</th>
-                  <th className="px-2 py-2 font-medium">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {complaints.map((complaint) => (
-                  <tr key={complaint.id} className="border-b border-slate-100 align-top">
-                    <td className="px-2 py-3 text-sm text-slate-700">
-                      {bookingMap.get(complaint.bookingId)?.id ?? complaint.bookingId}
-                    </td>
-                    <td className="px-2 py-3 text-sm text-slate-800">{complaint.message}</td>
-                    <td className="px-2 py-3 text-sm">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[complaint.status]}`}>
-                        {complaint.status}
-                      </span>
-                    </td>
-                    <td className="px-2 py-3 text-sm text-slate-700">{new Date(complaint.createdAt).toLocaleString()}</td>
-                    <td className="px-2 py-3 text-sm">
-                      <Link href={`/user/complaints/${complaint.id}`} className="font-medium text-blue-700">
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {complaints.length === 0 ? (
+          <div className="mt-4 rounded-lg bg-secondary/50 p-4 text-center">
+            <p className="text-sm text-muted-foreground">You haven&apos;t submitted any concerns yet.</p>
           </div>
-        ) : null}
-      </section>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {complaints.map((complaint) => (
+              <div
+                key={complaint.id}
+                className="rounded-lg border border-border p-4 transition-all hover:border-primary/30"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <p className="text-sm text-foreground line-clamp-2">{complaint.message}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Booking: {bookingMap.get(complaint.bookingId)?.id.slice(0, 8) ?? complaint.bookingId.slice(0, 8)}...
+                    </p>
+                  </div>
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${STATUS_STYLES[complaint.status]}`}>
+                    {complaint.status}
+                  </span>
+                </div>
+                <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
+                  <p className="text-xs text-muted-foreground">{new Date(complaint.createdAt).toLocaleDateString()}</p>
+                  <Link
+                    href={`/user/complaints/${complaint.id}`}
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
+                    View Details
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

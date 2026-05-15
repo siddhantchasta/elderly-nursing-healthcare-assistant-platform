@@ -22,8 +22,8 @@ const STATUS_STYLES: Record<BookingItem["status"], string> = {
   pending: "bg-amber-100 text-amber-800",
   accepted: "bg-sky-100 text-sky-800",
   rejected: "bg-rose-100 text-rose-800",
-  in_progress: "bg-indigo-100 text-indigo-800",
-  completed: "bg-emerald-100 text-emerald-800",
+  in_progress: "bg-primary/10 text-primary",
+  completed: "bg-green-100 text-green-800",
 };
 
 export default function BookingDetailView({ bookingId }: { bookingId: string }) {
@@ -95,7 +95,7 @@ export default function BookingDetailView({ bookingId }: { bookingId: string }) 
 
     try {
       await rateBooking(bookingId, Number(rating));
-      setSuccess("Rating submitted successfully.");
+      setSuccess("Thank you for your feedback!");
     } catch (err) {
       if (err instanceof ApiClientError) {
         setError(err.message);
@@ -112,77 +112,125 @@ export default function BookingDetailView({ bookingId }: { bookingId: string }) 
   const caregiver = useMemo(() => caregivers.find((c) => c.id === booking?.caregiverId), [caregivers, booking]);
 
   if (loading) {
-    return <p className="text-sm text-slate-600">Loading booking detail...</p>;
+    return (
+      <div className="rounded-xl border border-border bg-card p-8 text-center">
+        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <p className="mt-3 text-sm text-muted-foreground">Loading booking details...</p>
+      </div>
+    );
   }
 
   if (!booking) {
-    return <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">Booking not found.</p>;
+    return (
+      <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center">
+        <p className="font-medium text-destructive">Booking not found</p>
+        <p className="mt-1 text-sm text-muted-foreground">This booking may have been removed or you may not have access.</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
-        <div className="flex items-start justify-between gap-3">
-          <h2 className="text-xl font-semibold text-slate-900">Booking Details</h2>
-          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[booking.status]}`}>
+      {/* Main booking info */}
+      <div className="rounded-xl border border-border bg-card p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold text-foreground">{service?.serviceName ?? "Care Service"}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Booking ID: {bookingId.slice(0, 8)}...</p>
+          </div>
+          <span className={`rounded-full px-3 py-1 text-sm font-medium capitalize ${STATUS_STYLES[booking.status]}`}>
             {booking.status.replace("_", " ")}
           </span>
         </div>
 
-        {error ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-        {success ? <p className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{success}</p> : null}
+        {error && (
+          <div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            {success}
+          </div>
+        )}
 
-        <div className="mt-4 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
-          <p><span className="font-medium">Service:</span> {service?.serviceName ?? booking.serviceId}</p>
-          <p><span className="font-medium">Caregiver:</span> {caregiver?.email ?? booking.caregiverId}</p>
-          <p><span className="font-medium">Patient:</span> {patient ? `Age ${patient.age}` : booking.patientId}</p>
-          <p><span className="font-medium">Booking Type:</span> {booking.bookingType.replace("_", " ")}</p>
-          <p><span className="font-medium">Scheduled At:</span> {new Date(booking.scheduledAt).toLocaleString()}</p>
-          <p><span className="font-medium">Status Updated At:</span> {new Date(booking.statusUpdatedAt).toLocaleString()}</p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-lg bg-secondary/50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Patient</p>
+            <p className="mt-1 font-medium text-foreground">{patient ? `Age ${patient.age}` : "Patient profile"}</p>
+            {patient && <p className="mt-0.5 text-sm text-muted-foreground">{patient.medicalNeeds.slice(0, 50)}...</p>}
+          </div>
+          <div className="rounded-lg bg-secondary/50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Caregiver</p>
+            <p className="mt-1 font-medium text-foreground">{caregiver?.email ?? "Assigned caregiver"}</p>
+            {caregiver && <p className="mt-0.5 text-sm text-muted-foreground">Rating: {caregiver.rating.toFixed(1)}/5</p>}
+          </div>
+          <div className="rounded-lg bg-secondary/50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Booking Type</p>
+            <p className="mt-1 font-medium capitalize text-foreground">{booking.bookingType.replace("_", " ")}</p>
+          </div>
+          <div className="rounded-lg bg-secondary/50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Scheduled</p>
+            <p className="mt-1 font-medium text-foreground">{new Date(booking.scheduledAt).toLocaleString()}</p>
+          </div>
         </div>
 
-        {booking.status === "completed" ? (
-          <form className="mt-5 flex flex-wrap items-end gap-3" onSubmit={onRateSubmit}>
-            <div>
-              <label htmlFor="rating" className="mb-1 block text-sm font-medium text-slate-700">Rate this booking</label>
-              <select
-                id="rating"
-                value={rating}
-                onChange={(event) => setRating(event.target.value)}
-                className="rounded-lg border border-slate-300 px-3 py-2"
+        {booking.status === "completed" && (
+          <div className="mt-6 border-t border-border pt-6">
+            <h3 className="font-semibold text-foreground">Rate This Care Session</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Your feedback helps us maintain quality care.</p>
+            <form className="mt-4 flex flex-wrap items-end gap-4" onSubmit={onRateSubmit}>
+              <div>
+                <label htmlFor="rating" className="mb-1.5 block text-sm font-medium text-foreground">
+                  Your Rating
+                </label>
+                <select
+                  id="rating"
+                  value={rating}
+                  onChange={(event) => setRating(event.target.value)}
+                  className="rounded-lg border border-border bg-card px-4 py-2.5 text-foreground outline-none focus:border-primary"
+                >
+                  <option value="5">5 - Excellent</option>
+                  <option value="4">4 - Very Good</option>
+                  <option value="3">3 - Good</option>
+                  <option value="2">2 - Fair</option>
+                  <option value="1">1 - Poor</option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                disabled={submittingRating}
+                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
               >
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-              </select>
-            </div>
-            <button
-              type="submit"
-              disabled={submittingRating}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-            >
-              {submittingRating ? "Submitting..." : "Submit Rating"}
-            </button>
-          </form>
-        ) : null}
-      </section>
+                {submittingRating ? "Submitting..." : "Submit Rating"}
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
 
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">Care Notes</h3>
-        {notes.length === 0 ? <p className="mt-3 text-sm text-slate-600">No care notes yet.</p> : null}
-        {notes.length > 0 ? (
-          <ul className="mt-3 space-y-3">
+      {/* Care notes */}
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h3 className="text-lg font-semibold text-foreground">Care Notes</h3>
+        <p className="mt-1 text-sm text-muted-foreground">Notes and updates from the caregiver.</p>
+
+        {notes.length === 0 ? (
+          <div className="mt-4 rounded-lg bg-secondary/50 p-4 text-center">
+            <p className="text-sm text-muted-foreground">No care notes have been added yet.</p>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
             {notes.map((note) => (
-              <li key={note.id} className="rounded-lg border border-slate-200 p-3">
-                <p className="text-sm text-slate-800">{note.note}</p>
-                <p className="mt-1 text-xs text-slate-500">{new Date(note.createdAt).toLocaleString()}</p>
-              </li>
+              <div key={note.id} className="rounded-lg border border-border p-4">
+                <p className="text-sm text-foreground">{note.note}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {new Date(note.createdAt).toLocaleString()}
+                </p>
+              </div>
             ))}
-          </ul>
-        ) : null}
-      </section>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

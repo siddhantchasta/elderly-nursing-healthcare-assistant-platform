@@ -10,10 +10,10 @@ import type { CaregiverListItem } from "@/types/caregiver";
 import type { PatientProfile } from "@/types/patient";
 import type { ServiceItem } from "@/types/service";
 
-const BOOKING_TYPE_OPTIONS: { value: BookingType; label: string }[] = [
-  { value: "hourly", label: "Hourly" },
-  { value: "daily", label: "Daily" },
-  { value: "long_term", label: "Long Term" },
+const BOOKING_TYPE_OPTIONS: { value: BookingType; label: string; description: string }[] = [
+  { value: "hourly", label: "Hourly", description: "Pay by the hour for flexible care" },
+  { value: "daily", label: "Daily", description: "Full day care coverage" },
+  { value: "long_term", label: "Long Term", description: "Extended care arrangements" },
 ];
 
 export default function BookingRequestForm() {
@@ -34,6 +34,7 @@ export default function BookingRequestForm() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const selectedService = useMemo(() => services.find((item) => item.id === serviceId), [serviceId, services]);
+  const selectedCaregiver = useMemo(() => caregivers.find((item) => item.id === caregiverId), [caregiverId, caregivers]);
 
   const loadPrerequisites = useCallback(async () => {
     setLoadingData(true);
@@ -90,7 +91,7 @@ export default function BookingRequestForm() {
 
     try {
       if (!patientId || !serviceId || !caregiverId || !scheduledAtLocal) {
-        setError("Please select patient, service, caregiver, and schedule.");
+        setError("Please complete all required fields.");
         return;
       }
 
@@ -102,7 +103,7 @@ export default function BookingRequestForm() {
         scheduledAt: new Date(scheduledAtLocal).toISOString(),
       });
 
-      setSuccess("Booking request sent successfully.");
+      setSuccess("Your booking request has been submitted successfully.");
       setScheduledAtLocal("");
     } catch (err) {
       if (err instanceof ApiClientError) {
@@ -119,105 +120,175 @@ export default function BookingRequestForm() {
     }
   }
 
+  if (loadingData) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-8 text-center">
+        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <p className="mt-3 text-sm text-muted-foreground">Loading booking options...</p>
+      </div>
+    );
+  }
+
+  if (patients.length === 0) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-8 text-center">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
+          <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+        </div>
+        <h3 className="font-semibold text-foreground">Create a Patient Profile First</h3>
+        <p className="mt-1 text-sm text-muted-foreground">You need to add a patient profile before booking care services.</p>
+        <a
+          href="/user/patients"
+          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+        >
+          Add Patient Profile
+        </a>
+      </div>
+    );
+  }
+
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">Create Booking Request</h2>
-        <button onClick={() => void loadPrerequisites()} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">
-          Refresh Data
-        </button>
+    <div className="rounded-xl border border-border bg-card p-6">
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-foreground">Book Care Service</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Complete the form below to request a care appointment.</p>
       </div>
 
-      {loadingData ? <p className="mt-4 text-sm text-slate-600">Loading patients, services, and caregivers...</p> : null}
-      {error ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-      {success ? <p className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{success}</p> : null}
+      {error && (
+        <div className="mb-6 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          {success}
+        </div>
+      )}
 
-      {!loadingData ? (
-        <form className="mt-5 space-y-4" onSubmit={onSubmit}>
-          <div>
-            <label htmlFor="patientId" className="mb-1 block text-sm font-medium text-slate-700">Patient Profile</label>
-            <select
-              id="patientId"
-              required
-              value={patientId}
-              onChange={(event) => setPatientId(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
-            >
-              {patients.map((patient) => (
-                <option key={patient.id} value={patient.id}>Age {patient.age} - {patient.medicalNeeds.slice(0, 40)}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="serviceId" className="mb-1 block text-sm font-medium text-slate-700">Service</label>
-            <select
-              id="serviceId"
-              required
-              value={serviceId}
-              onChange={(event) => setServiceId(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
-            >
-              {services.map((service) => (
-                <option key={service.id} value={service.id}>{service.serviceName}</option>
-              ))}
-            </select>
-            {selectedService ? (
-              <p className="mt-1 text-xs text-slate-600">{selectedService.duration} | Rs {selectedService.price}</p>
-            ) : null}
-          </div>
-
-          <div>
-            <label htmlFor="caregiverId" className="mb-1 block text-sm font-medium text-slate-700">Caregiver</label>
-            <select
-              id="caregiverId"
-              required
-              value={caregiverId}
-              onChange={(event) => setCaregiverId(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
-            >
-              {caregivers.map((caregiver) => (
-                <option key={caregiver.id} value={caregiver.id}>{caregiver.email} ({caregiver.rating.toFixed(1)})</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="bookingType" className="mb-1 block text-sm font-medium text-slate-700">Booking Type</label>
-            <select
-              id="bookingType"
-              required
-              value={bookingType}
-              onChange={(event) => setBookingType(event.target.value as BookingType)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
-            >
-              {BOOKING_TYPE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="scheduledAt" className="mb-1 block text-sm font-medium text-slate-700">Scheduled At</label>
-            <input
-              id="scheduledAt"
-              type="datetime-local"
-              required
-              value={scheduledAtLocal}
-              onChange={(event) => setScheduledAtLocal(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={submitting || patients.length === 0 || services.length === 0 || caregivers.length === 0}
-            className="rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+      <form className="space-y-6" onSubmit={onSubmit}>
+        {/* Patient selection */}
+        <div>
+          <label htmlFor="patientId" className="mb-1.5 block text-sm font-medium text-foreground">
+            Select Patient
+          </label>
+          <select
+            id="patientId"
+            required
+            value={patientId}
+            onChange={(event) => setPatientId(event.target.value)}
+            className="w-full rounded-lg border border-border bg-card px-4 py-3 text-foreground outline-none transition-colors focus:border-primary"
           >
-            {submitting ? "Sending request..." : "Send Booking Request"}
-          </button>
-        </form>
-      ) : null}
-    </section>
+            {patients.map((patient) => (
+              <option key={patient.id} value={patient.id}>
+                Age {patient.age} - {patient.medicalNeeds.slice(0, 40)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Service selection */}
+        <div>
+          <label htmlFor="serviceId" className="mb-1.5 block text-sm font-medium text-foreground">
+            Care Service
+          </label>
+          <select
+            id="serviceId"
+            required
+            value={serviceId}
+            onChange={(event) => setServiceId(event.target.value)}
+            className="w-full rounded-lg border border-border bg-card px-4 py-3 text-foreground outline-none transition-colors focus:border-primary"
+          >
+            {services.map((service) => (
+              <option key={service.id} value={service.id}>
+                {service.serviceName}
+              </option>
+            ))}
+          </select>
+          {selectedService && (
+            <div className="mt-2 rounded-lg bg-secondary/50 p-3">
+              <p className="text-sm text-foreground">{selectedService.description}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Duration: {selectedService.duration} | Price: Rs {selectedService.price}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Caregiver selection */}
+        <div>
+          <label htmlFor="caregiverId" className="mb-1.5 block text-sm font-medium text-foreground">
+            Preferred Caregiver
+          </label>
+          <select
+            id="caregiverId"
+            required
+            value={caregiverId}
+            onChange={(event) => setCaregiverId(event.target.value)}
+            className="w-full rounded-lg border border-border bg-card px-4 py-3 text-foreground outline-none transition-colors focus:border-primary"
+          >
+            {caregivers.map((caregiver) => (
+              <option key={caregiver.id} value={caregiver.id}>
+                {caregiver.email} ({caregiver.rating.toFixed(1)} rating)
+              </option>
+            ))}
+          </select>
+          {selectedCaregiver && (
+            <div className="mt-2 rounded-lg bg-secondary/50 p-3">
+              <p className="text-sm text-foreground">{selectedCaregiver.qualifications}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Areas: {selectedCaregiver.serviceAreas.join(", ")}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Booking type */}
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-foreground">Booking Type</label>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {BOOKING_TYPE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setBookingType(option.value)}
+                className={`rounded-lg border p-4 text-left transition-all ${
+                  bookingType === option.value
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/30"
+                }`}
+              >
+                <p className="font-medium text-foreground">{option.label}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{option.description}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Schedule */}
+        <div>
+          <label htmlFor="scheduledAt" className="mb-1.5 block text-sm font-medium text-foreground">
+            Preferred Date & Time
+          </label>
+          <input
+            id="scheduledAt"
+            type="datetime-local"
+            required
+            value={scheduledAtLocal}
+            onChange={(event) => setScheduledAtLocal(event.target.value)}
+            className="w-full rounded-lg border border-border bg-card px-4 py-3 text-foreground outline-none transition-colors focus:border-primary"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={submitting || patients.length === 0 || services.length === 0 || caregivers.length === 0}
+          className="w-full rounded-lg bg-primary px-5 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {submitting ? "Submitting Request..." : "Request Booking"}
+        </button>
+      </form>
+    </div>
   );
 }
