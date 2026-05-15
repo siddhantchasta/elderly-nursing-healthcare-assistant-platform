@@ -51,14 +51,6 @@ export default function AdminDashboardPage() {
 
         {/* ACTIONS */}
         <div className="flex items-center gap-4">
-          <button className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10">
-            <Search className="h-5 w-5" />
-          </button>
-
-          <button className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10">
-            <Bell className="h-5 w-5" />
-          </button>
-
           <div className="hidden rounded-2xl border border-white/10 bg-white/5 px-5 py-3 sm:block">
             <p className="text-xs text-white/40">
               Active Admin

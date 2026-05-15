@@ -9,11 +9,15 @@ import { getSessionUser } from "@/lib/auth/session";
 import type { BookingItem } from "@/types/booking";
 import type { ComplaintItem } from "@/types/complaint";
 import DashboardSection from "@/components/ui/DashboardSection";
+import { formatBookingOptionLabel, formatBookingReference } from "@/lib/bookings/display";
 import { COMPLAINT_STATUS_STYLES, ud } from "@/lib/ui/user-dashboard";
+import { listServices } from "@/lib/api/endpoints";
+import type { ServiceItem } from "@/types/service";
 
 export default function ComplaintsManager() {
   const router = useRouter();
   const [bookings, setBookings] = useState<BookingItem[]>([]);
+  const [services, setServices] = useState<ServiceItem[]>([]);
   const [complaints, setComplaints] = useState<ComplaintItem[]>([]);
 
   const [bookingId, setBookingId] = useState("");
@@ -29,9 +33,14 @@ export default function ComplaintsManager() {
     setError(null);
 
     try {
-      const [bookingsData, complaintsData] = await Promise.all([listBookings(), listComplaints()]);
+      const [bookingsData, complaintsData, servicesData] = await Promise.all([
+        listBookings(),
+        listComplaints(),
+        listServices(),
+      ]);
       setBookings(bookingsData);
       setComplaints(complaintsData);
+      setServices(servicesData);
 
       if (bookingsData.length > 0) {
         setBookingId((prev) => prev || bookingsData[0].id);
@@ -66,6 +75,7 @@ export default function ComplaintsManager() {
   }, [router, loadData]);
 
   const bookingMap = useMemo(() => new Map(bookings.map((b) => [b.id, b])), [bookings]);
+  const serviceMap = useMemo(() => new Map(services.map((service) => [service.id, service])), [services]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -115,7 +125,7 @@ export default function ComplaintsManager() {
               >
                 {bookings.map((booking) => (
                   <option key={booking.id} value={booking.id}>
-                    {booking.id} ({booking.status})
+                    {formatBookingOptionLabel(booking, serviceMap.get(booking.serviceId) ?? null)}
                   </option>
                 ))}
               </select>
@@ -168,7 +178,21 @@ export default function ComplaintsManager() {
               <tbody>
                 {complaints.map((complaint) => (
                   <tr key={complaint.id}>
-                    <td className={ud.td}>{bookingMap.get(complaint.bookingId)?.id ?? complaint.bookingId}</td>
+                    <td className={ud.td}>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-[#111111]">
+                          {formatBookingReference(bookingMap.get(complaint.bookingId)?.id ?? complaint.bookingId)}
+                        </p>
+                        <p className="text-xs text-[#8ca09a]">
+                          {bookingMap.get(complaint.bookingId)
+                            ? formatBookingOptionLabel(
+                                bookingMap.get(complaint.bookingId)!,
+                                serviceMap.get(bookingMap.get(complaint.bookingId)!.serviceId) ?? null
+                              )
+                            : complaint.bookingId}
+                        </p>
+                      </div>
+                    </td>
                     <td className={ud.td}>{complaint.message}</td>
                     <td className={ud.td}>
                       <span className={`${ud.badge} ${COMPLAINT_STATUS_STYLES[complaint.status]}`}>

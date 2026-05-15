@@ -18,6 +18,12 @@ import type { CareNoteItem } from "@/types/careNote";
 import type { PatientProfile } from "@/types/patient";
 import type { ServiceItem } from "@/types/service";
 
+import {
+  formatBookingContext,
+  formatBookingReference,
+  formatCaregiverSummary,
+  formatPatientSummary,
+} from "@/lib/bookings/display";
 import { BOOKING_STATUS_STYLES, ud } from "@/lib/ui/user-dashboard";
 
 export default function BookingDetailView({ bookingId }: { bookingId: string }) {
@@ -104,6 +110,10 @@ export default function BookingDetailView({ bookingId }: { bookingId: string }) 
   const patient = useMemo(() => patients.find((p) => p.id === booking?.patientId), [patients, booking]);
   const service = useMemo(() => services.find((s) => s.id === booking?.serviceId), [services, booking]);
   const caregiver = useMemo(() => caregivers.find((c) => c.id === booking?.caregiverId), [caregivers, booking]);
+  const bookingReference = booking ? formatBookingReference(booking.id) : null;
+  const bookingContext = booking && service ? formatBookingContext(booking, service.serviceName) : null;
+  const caregiverSummary = formatCaregiverSummary(caregiver);
+  const patientSummary = formatPatientSummary(patient);
 
   if (loading) {
     return <p className={ud.muted}>Loading booking detail...</p>;
@@ -117,7 +127,11 @@ export default function BookingDetailView({ bookingId }: { bookingId: string }) 
     <div className="space-y-8">
       <section className={ud.card}>
         <div className="flex items-start justify-between gap-3">
-          <h2 className={ud.cardTitle}>Booking details</h2>
+          <div>
+            <h2 className={ud.cardTitle}>Booking details</h2>
+            {bookingReference ? <p className="mt-1 text-sm text-[#8ca09a]">{bookingReference}</p> : null}
+            {bookingContext ? <p className="mt-1 text-sm text-[#5f6d67]">{bookingContext}</p> : null}
+          </div>
           <span className={`${ud.badge} ${BOOKING_STATUS_STYLES[booking.status]}`}>
             {booking.status.replace("_", " ")}
           </span>
@@ -133,11 +147,11 @@ export default function BookingDetailView({ bookingId }: { bookingId: string }) 
           </div>
           <div>
             <dt className="text-[#8ca09a]">Caregiver</dt>
-            <dd className="mt-1 font-medium text-[#111111]">{caregiver?.email ?? booking.caregiverId}</dd>
+            <dd className="mt-1 font-medium text-[#111111]">{caregiverSummary ?? booking.caregiverId}</dd>
           </div>
           <div>
             <dt className="text-[#8ca09a]">Patient</dt>
-            <dd className="mt-1 font-medium text-[#111111]">{patient ? `Age ${patient.age}` : booking.patientId}</dd>
+            <dd className="mt-1 font-medium text-[#111111]">{patientSummary ?? booking.patientId}</dd>
           </div>
           <div>
             <dt className="text-[#8ca09a]">Booking type</dt>

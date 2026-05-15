@@ -11,6 +11,12 @@ import type { CaregiverListItem } from "@/types/caregiver";
 import type { PatientProfile } from "@/types/patient";
 import type { ServiceItem } from "@/types/service";
 import DashboardSection from "@/components/ui/DashboardSection";
+import {
+  formatBookingContext,
+  formatBookingReference,
+  formatCaregiverSummary,
+  formatPatientSummary,
+} from "@/lib/bookings/display";
 import { BOOKING_STATUS_STYLES, ud } from "@/lib/ui/user-dashboard";
 
 const BOOKING_TYPE_LABELS: Record<BookingItem["bookingType"], string> = {
@@ -107,14 +113,23 @@ export default function BookingHistory() {
             <tbody>
               {bookings.map((booking) => {
                 const serviceName = serviceMap.get(booking.serviceId)?.serviceName ?? booking.serviceId;
-                const caregiverEmail = caregiverMap.get(booking.caregiverId)?.email ?? booking.caregiverId;
+                const caregiver = caregiverMap.get(booking.caregiverId);
                 const patient = patientMap.get(booking.patientId);
+                const bookingReference = formatBookingReference(booking.id);
+                const bookingContext = formatBookingContext(booking, serviceName);
+                const caregiverSummary = formatCaregiverSummary(caregiver) ?? booking.caregiverId;
+                const patientSummary = formatPatientSummary(patient) ?? booking.patientId;
 
                 return (
                   <tr key={booking.id}>
-                    <td className={ud.tdStrong}>{serviceName}</td>
-                    <td className={ud.td}>{caregiverEmail}</td>
-                    <td className={ud.td}>{patient ? `Age ${patient.age}` : booking.patientId}</td>
+                    <td className={ud.tdStrong}>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-[#111111]">{bookingReference}</p>
+                        <p className="text-xs text-[#8ca09a]">{bookingContext}</p>
+                      </div>
+                    </td>
+                    <td className={ud.td}>{caregiverSummary}</td>
+                    <td className={ud.td}>{patientSummary}</td>
                     <td className={ud.td}>{BOOKING_TYPE_LABELS[booking.bookingType]}</td>
                     <td className={ud.td}>{new Date(booking.scheduledAt).toLocaleString()}</td>
                     <td className={ud.td}>

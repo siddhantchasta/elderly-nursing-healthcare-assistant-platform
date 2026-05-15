@@ -7,6 +7,7 @@ import { ApiClientError } from "@/lib/api/client";
 import { listBookings, listServices, updateBookingDecision, updateBookingStatus } from "@/lib/api/endpoints";
 import { getSessionUser } from "@/lib/auth/session";
 import DashboardSection from "@/components/ui/DashboardSection";
+import { formatBookingContext, formatBookingReference } from "@/lib/bookings/display";
 import { BOOKING_STATUS_STYLES, cd } from "@/lib/ui/caregiver-dashboard";
 import type { BookingItem } from "@/types/booking";
 import type { ServiceItem } from "@/types/service";
@@ -142,10 +143,17 @@ export default function CaregiverBookingsManager() {
               {bookings.map((booking) => {
                 const serviceName = serviceMap.get(booking.serviceId)?.serviceName ?? booking.serviceId;
                 const isBusy = actionId === booking.id;
+                const bookingReference = formatBookingReference(booking.id);
+                const bookingContext = formatBookingContext(booking, serviceName);
 
                 return (
                   <tr key={booking.id}>
-                    <td className={cd.td}>{booking.id}</td>
+                    <td className={cd.td}>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-[#111111]">{bookingReference}</p>
+                        <p className="text-xs text-[#8ca09a]">{bookingContext}</p>
+                      </div>
+                    </td>
                     <td className={cd.tdStrong}>{serviceName}</td>
                     <td className={cd.td}>{BOOKING_TYPE_LABELS[booking.bookingType]}</td>
                     <td className={cd.td}>{new Date(booking.scheduledAt).toLocaleString()}</td>

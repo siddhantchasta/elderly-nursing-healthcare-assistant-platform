@@ -6,6 +6,7 @@ import { ApiClientError } from "@/lib/api/client";
 import { listUserNotifications } from "@/lib/api/endpoints";
 import { getSessionUser } from "@/lib/auth/session";
 import { startNotificationsStream } from "@/lib/notifications/stream";
+import { formatBookingReference } from "@/lib/bookings/display";
 import type { BookingStatusUpdateItem, ComplaintStatusUpdateItem } from "@/types/notification";
 import DashboardSection from "@/components/ui/DashboardSection";
 import { BOOKING_STATUS_STYLES, COMPLAINT_STATUS_STYLES, ud } from "@/lib/ui/user-dashboard";
@@ -114,7 +115,10 @@ export default function NotificationsPanel() {
             {bookingUpdates.map((item) => (
               <li key={item.bookingId} className={ud.cardMuted}>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium text-[#111111]">Booking {item.bookingId}</p>
+                  <div>
+                    <p className="text-sm font-medium text-[#111111]">{formatBookingReference(item.bookingId)}</p>
+                    <p className="mt-1 text-xs text-[#8ca09a]">Booking status update</p>
+                  </div>
                   <span className={`${ud.badge} ${BOOKING_STATUS_STYLES[item.status]}`}>
                     {item.status.replace("_", " ")}
                   </span>
@@ -133,7 +137,10 @@ export default function NotificationsPanel() {
             {complaintUpdates.map((item) => (
               <li key={item.complaintId} className={ud.cardMuted}>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium text-[#111111]">Complaint {item.complaintId}</p>
+                  <div>
+                    <p className="text-sm font-medium text-[#111111]">Complaint {item.complaintId}</p>
+                    <p className="mt-1 text-xs text-[#8ca09a]">{formatBookingReference(item.bookingId)}</p>
+                  </div>
                   <span className={`${ud.badge} ${COMPLAINT_STATUS_STYLES[item.status]}`}>{item.status}</span>
                 </div>
                 <p className="mt-2 text-sm text-[#4b4b4b]">{item.message}</p>
