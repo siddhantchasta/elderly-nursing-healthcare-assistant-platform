@@ -1,19 +1,34 @@
-import Link from "next/link";
+"use client";
+
+import { useRouter } from "next/navigation";
+
+import AdminDashboardShell from "@/components/layout/AdminDashboardShell";
+
 import PendingCaregiversTable from "@/components/admin/PendingCaregiversTable";
 
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+
+import { clearSession } from "@/lib/auth/session";
+
 export default function AdminPendingCaregiversPage() {
+  const router = useRouter();
+
   return (
-    <main className="min-h-screen bg-slate-100 p-6 sm:p-8">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-slate-900">Pending Caregiver Verification</h1>
-          <Link href="/admin/dashboard" className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700">
-            Back to Dashboard
-          </Link>
-        </div>
+    <AdminDashboardShell
+      onLogout={() => {
+        clearSession();
+
+        router.push("/login");
+      }}
+    >
+      <div className="space-y-8">
+        <AdminPageHeader
+          title="Caregiver Verification"
+          description="Review pending caregiver applications, validate credentials, and approve trusted professionals for the platform."
+        />
 
         <PendingCaregiversTable />
       </div>
-    </main>
+    </AdminDashboardShell>
   );
 }
