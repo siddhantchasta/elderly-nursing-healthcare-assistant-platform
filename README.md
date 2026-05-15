@@ -95,11 +95,14 @@ Create `.env` files in both `frontend` and `backend` directories.
 ### Backend (`backend/.env`)
 | Variable | Description |
 | :--- | :--- |
-| `PORT` | API server port (e.g., 5000) |
 | `MONGODB_URI` | MongoDB connection string |
 | `JWT_SECRET` | Secret key for JWT signature |
 | `JWT_EXPIRES_IN` | Token expiration time (e.g., 7d) |
+| `ADMIN_EMAIL` | your_desired_admin_email |
+| `ADMIN_PASSWORD` | replace_with_a_strong_admin_password |
+| `MEDICAL_DATA_ENCRYPTION_KEY` | replace_with_a_base64_encoded_32_byte_key |
 | `FRONTEND_URL` | CORS allowed origin (e.g., http://localhost:3000) |
+
 
 ### Frontend (`frontend/.env.local`)
 | Variable | Description |

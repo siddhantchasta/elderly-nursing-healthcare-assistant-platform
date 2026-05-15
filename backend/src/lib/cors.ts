@@ -1,10 +1,21 @@
-const ALLOWED_ORIGIN = "http://localhost:3001";
+const ALLOWED_ORIGINS = process.env.FRONTEND_URL?.split(",") || [];
 const ALLOWED_METHODS = "GET, POST, PUT, PATCH, DELETE, OPTIONS";
 const ALLOWED_HEADERS = "Content-Type, Authorization";
 
-function resolveAllowedOrigin(request: Request): string {
-  const requestOrigin = request.headers.get("origin");
-  return requestOrigin === ALLOWED_ORIGIN ? requestOrigin : ALLOWED_ORIGIN;
+function resolveAllowedOrigin(
+  request: Request
+): string {
+  const requestOrigin =
+    request.headers.get("origin");
+
+  if (
+    requestOrigin &&
+    ALLOWED_ORIGINS.includes(requestOrigin)
+  ) {
+    return requestOrigin;
+  }
+
+  return ALLOWED_ORIGINS[0] || "";
 }
 
 function getCorsHeaders(request: Request): HeadersInit {
