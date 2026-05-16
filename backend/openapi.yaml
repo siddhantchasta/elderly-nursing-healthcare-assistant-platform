@@ -1,0 +1,1222 @@
+openapi: 3.0.3
+info:
+  title: Elderly Nursing Healthcare Assistant Platform API
+  version: '1.0.0'
+  description: >-
+    Auto-generated OpenAPI specification derived from backend route handlers
+    and Mongoose models. Security: Bearer JWT (`Authorization: Bearer <token>`).
+servers:
+  - url: http://localhost:3000/api
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponse'
+        '500':
+          description: DB or server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/register:
+    post:
+      summary: Register new account (user or caregiver)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict (user exists)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      summary: Login and receive JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /services:
+    get:
+      summary: List services
+      responses:
+        '200':
+          description: Services list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Service'
+    post:
+      summary: Create service (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateServiceRequest'
+      responses:
+        '201':
+          description: Service created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Service conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      summary: Update service (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateServiceRequest'
+      responses:
+        '200':
+          description: Service updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /bookings:
+    post:
+      summary: Create a booking request (user)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Domain conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: List booking history (user or caregiver)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Booking list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Booking'
+    patch:
+      summary: Caregiver decision (accept/reject) on a booking
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBookingDecisionRequest'
+      responses:
+        '200':
+          description: Booking updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Domain conflict
+
+  /bookings/status:
+    patch:
+      summary: Update booking status (caregiver: in_progress | completed)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBookingStatusRequest'
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+
+  /bookings/{bookingId}:
+    get:
+      summary: Get booking by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /bookings/{bookingId}/rating:
+    post:
+      summary: Rate a completed booking (user)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RateBookingRequest'
+      responses:
+        '200':
+          description: Rating submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '409':
+          description: Already rated or invalid state
+
+  /bookings/notes:
+    post:
+      summary: Add care note (caregiver)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCareNoteRequest'
+      responses:
+        '201':
+          description: Note created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CareNoteResponse'
+    get:
+      summary: List care notes by bookingId (user or caregiver)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bookingId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Care notes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CareNote'
+
+  /caregivers:
+    get:
+      summary: List available caregivers
+      responses:
+        '200':
+          description: Caregivers list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Caregiver'
+    post:
+      summary: Create caregiver profile (caregiver)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCaregiverRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaregiverResponse'
+    patch:
+      summary: Update caregiver profile (caregiver)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCaregiverProfileRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaregiverResponse'
+
+  /caregivers/me:
+    get:
+      summary: Get caregiver profile for authenticated caregiver
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Caregiver profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaregiverResponse'
+
+  /caregivers/work-history:
+    get:
+      summary: Get caregiver work history (caregiver)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Work summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+
+  /complaints:
+    post:
+      summary: Create a complaint (user or caregiver)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateComplaintRequest'
+      responses:
+        '201':
+          description: Complaint created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplaintResponse'
+    get:
+      summary: List complaints reported by authenticated user/caregiver
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, escalated, resolved]
+      responses:
+        '200':
+          description: Complaint list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Complaint'
+
+  /complaints/{complaintId}:
+    get:
+      summary: Get complaint by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: complaintId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Complaint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplaintResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /patients:
+    post:
+      summary: Create patient profile for authenticated user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePatientRequest'
+      responses:
+        '201':
+          description: Patient created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientResponse'
+    get:
+      summary: List patient profiles for authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Patient profiles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Patient'
+
+  /notifications/status-updates:
+    get:
+      summary: List booking status updates for user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserNotifications'
+
+  /notifications/stream:
+    get:
+      summary: Server-Sent Events stream of booking + complaint updates
+      description: SSE endpoint. Use `Accept: text/event-stream` and a persisted connection.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: text/event-stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /admin/caregivers/verification:
+    patch:
+      summary: Update caregiver verification status (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                caregiverId:
+                  type: string
+                verificationStatus:
+                  type: string
+                  enum: [pending, verified, rejected]
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaregiverResponse'
+
+  /admin/caregivers/pending:
+    get:
+      summary: List caregivers with pending verification (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Pending caregivers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Caregiver'
+
+  /admin/users:
+    get:
+      summary: List all users (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Users list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+    patch:
+      summary: Update a user's role (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRoleRequest'
+      responses:
+        '200':
+          description: Role updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  /admin/complaints:
+    get:
+      summary: List complaints (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, escalated, resolved]
+      responses:
+        '200':
+          description: Complaints list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Complaint'
+    patch:
+      summary: Update complaint status (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateComplaintStatusRequest'
+      responses:
+        '200':
+          description: Complaint updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplaintResponse'
+
+  /admin/reports/overview:
+    get:
+      summary: Get overview report (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Overview data
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /admin/analytics/kpis:
+    get:
+      summary: Get KPI summary (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: KPI summary
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    GenericResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        error:
+          type: string
+
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [user, caregiver, admin]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UserResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/User'
+
+    RegisterRequest:
+      type: object
+      required: [email, password, role]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          description: Plain-text password (will be hashed server-side)
+        role:
+          type: string
+          enum: [user, caregiver]
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+
+    Service:
+      type: object
+      properties:
+        _id:
+          type: string
+        category:
+          type: string
+          enum: [nursing_care, elderly_attendant, physiotherapy, post_hospital_care]
+        serviceName:
+          type: string
+        description:
+          type: string
+        duration:
+          type: string
+        price:
+          type: number
+        requiredQualification:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateServiceRequest:
+      type: object
+      required: [category, serviceName, description, duration, price, requiredQualification]
+      properties:
+        category:
+          type: string
+        serviceName:
+          type: string
+        description:
+          type: string
+        duration:
+          type: string
+        price:
+          type: number
+        requiredQualification:
+          type: string
+
+    UpdateServiceRequest:
+      type: object
+      properties:
+        serviceId:
+          type: string
+        category:
+          type: string
+        serviceName:
+          type: string
+        description:
+          type: string
+        duration:
+          type: string
+        price:
+          type: number
+        requiredQualification:
+          type: string
+
+    ServiceResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Service'
+
+    Booking:
+      type: object
+      properties:
+        _id:
+          type: string
+        userId:
+          type: string
+        patientId:
+          type: string
+        caregiverId:
+          type: string
+        serviceId:
+          type: string
+        bookingType:
+          type: string
+          enum: [hourly, daily, long_term]
+        status:
+          type: string
+          enum: [pending, accepted, rejected, in_progress, completed]
+        scheduledAt:
+          type: string
+          format: date-time
+        statusUpdatedAt:
+          type: string
+          format: date-time
+        userRating:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateBookingRequest:
+      type: object
+      required: [patientId, caregiverId, serviceId, bookingType, scheduledAt]
+      properties:
+        patientId:
+          type: string
+        caregiverId:
+          type: string
+        serviceId:
+          type: string
+        bookingType:
+          type: string
+          enum: [hourly, daily, long_term]
+        scheduledAt:
+          type: string
+          format: date-time
+
+    UpdateBookingDecisionRequest:
+      type: object
+      required: [bookingId, decision]
+      properties:
+        bookingId:
+          type: string
+        decision:
+          type: string
+          enum: [accepted, rejected]
+
+    UpdateBookingStatusRequest:
+      type: object
+      required: [bookingId, status]
+      properties:
+        bookingId:
+          type: string
+        status:
+          type: string
+          enum: [in_progress, completed]
+
+    RateBookingRequest:
+      type: object
+      required: [rating]
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+
+    BookingResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Booking'
+
+    Caregiver:
+      type: object
+      properties:
+        _id:
+          type: string
+        userId:
+          type: string
+        qualifications:
+          type: string
+        rating:
+          type: number
+        isAvailable:
+          type: boolean
+        serviceAreas:
+          type: array
+          items:
+            type: string
+        serviceIds:
+          type: array
+          items:
+            type: string
+        verificationStatus:
+          type: string
+          enum: [pending, verified, rejected]
+
+    CreateCaregiverRequest:
+      type: object
+      required: [qualifications, serviceAreas]
+      properties:
+        qualifications:
+          type: string
+        serviceAreas:
+          type: array
+          items:
+            type: string
+        serviceIds:
+          type: array
+          items:
+            type: string
+        rating:
+          type: number
+        isAvailable:
+          type: boolean
+
+    UpdateCaregiverProfileRequest:
+      type: object
+      properties:
+        isAvailable:
+          type: boolean
+        serviceAreas:
+          type: array
+          items:
+            type: string
+        serviceIds:
+          type: array
+          items:
+            type: string
+
+    CaregiverResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Caregiver'
+
+    CreateComplaintRequest:
+      type: object
+      required: [bookingId, message]
+      properties:
+        bookingId:
+          type: string
+        message:
+          type: string
+
+    Complaint:
+      type: object
+      properties:
+        _id:
+          type: string
+        bookingId:
+          type: string
+        raisedByUserId:
+          type: string
+        raisedByRole:
+          type: string
+          enum: [user, caregiver]
+        message:
+          type: string
+        status:
+          type: string
+          enum: [open, escalated, resolved]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ComplaintResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Complaint'
+
+    CreatePatientRequest:
+      type: object
+      required: [age, medicalNeeds]
+      properties:
+        age:
+          type: number
+          minimum: 0
+          maximum: 150
+        medicalNeeds:
+          type: string
+
+    Patient:
+      type: object
+      properties:
+        _id:
+          type: string
+        userId:
+          type: string
+        age:
+          type: number
+        medicalNeeds:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PatientResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Patient'
+
+    CreateCareNoteRequest:
+      type: object
+      required: [bookingId, note]
+      properties:
+        bookingId:
+          type: string
+        note:
+          type: string
+
+    CareNote:
+      type: object
+      properties:
+        _id:
+          type: string
+        bookingId:
+          type: string
+        caregiverId:
+          type: string
+        note:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CareNoteResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/CareNote'
+
+    UserNotifications:
+      type: object
+      properties:
+        bookingUpdates:
+          type: array
+          items:
+            type: object
+            properties:
+              bookingId:
+                type: string
+              patientId:
+                type: string
+              caregiverId:
+                type: string
+              serviceId:
+                type: string
+              status:
+                type: string
+              scheduledAt:
+                type: string
+                format: date-time
+              statusUpdatedAt:
+                type: string
+                format: date-time
+        complaintUpdates:
+          type: array
+          items:
+            type: object
+            properties:
+              complaintId:
+                type: string
+              bookingId:
+                type: string
+              raisedByRole:
+                type: string
+              message:
+                type: string
+              status:
+                type: string
+              createdAt:
+                type: string
+                format: date-time
+              updatedAt:
+                type: string
+                format: date-time
+
+    UpdateUserRoleRequest:
+      type: object
+      required: [userId, role]
+      properties:
+        userId:
+          type: string
+        role:
+          type: string
+          enum: [user, caregiver, admin]
+
+    UpdateComplaintStatusRequest:
+      type: object
+      required: [complaintId, status]
+      properties:
+        complaintId:
+          type: string
+        status:
+          type: string
+          enum: [open, escalated, resolved]

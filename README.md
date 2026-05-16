@@ -1,161 +1,313 @@
-<div align="center">
-  # 🏥 Elderly Nursing & Healthcare Assistance Platform
+# ElderCare — Elderly Nursing & Healthcare Assistance Platform
 
-  **A full-stack healthtech solution bridging the gap between elderly patients and verified healthcare professionals.**
+> A full-stack healthtech solution bridging the gap between elderly patients and verified healthcare professionals. Multi-role architecture, production-grade security, and real-time service coordination — built with the MERN stack.
 
-  [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
-  [![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
-  [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-  [![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
-  [![Express.js](https://img.shields.io/badge/Express.js-404D59?style=for-the-badge)](https://expressjs.com/)
-  [![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+> **Note:** This project is built for educational and portfolio purposes. It demonstrates a scalable healthcare-service platform with secure authentication, caregiver workflows, real-time notifications, and OpenAPI-documented REST APIs.
 
-</div>
+**Stack:** Next.js · React · TypeScript · Node.js · MongoDB · Tailwind CSS · JWT + bcrypt · AES-256-GCM · OpenAPI 3.0
 
----
+***
 
-## 📖 Project Overview
+## Table of Contents
 
-The **Elderly Nursing & Healthcare Assistance Platform** is an industry-grade, comprehensive web application designed to simplify home-based healthcare. It serves as a secure, role-based marketplace connecting families seeking care for their elderly loved ones with thoroughly vetted caregivers, certified nurses, and physiotherapists. 
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Quickstart](#quickstart)
+- [Environment Variables](#environment-variables)
+- [API Documentation](#api-documentation)
+- [Architecture](#architecture)
+- [Security](#security)
+- [Project Structure](#project-structure)
+- [Operational Notes](#operational-notes)
+- [Roadmap](#roadmap)
 
-Built with scalability, accessibility, and security in mind, this platform handles the entire care lifecycle—from initial caregiver discovery and background verification to booking management, real-time status tracking, and care note documentation.
+***
 
----
+## Features
 
-## ✨ Core Features
+Three portals, one platform. Role-specific interfaces give each user exactly what they need — nothing more, nothing less.
 
-*   🔐 **Secure User Authentication**: JWT-based role-specific authentication for Patients, Caregivers, and Admins.
-*   👵 **Patient Profile Management**: Detailed medical history, emergency contacts, and care requirements.
-*   🔍 **Service Browsing & Filtering**: Advanced search capabilities to find specific medical specialists or general attendants.
-*   📅 **Booking & Scheduling**: Streamlined interface for scheduling recurring or one-off healthcare visits.
-*   🛡️ **Caregiver Verification System**: Robust vetting process and document upload portal for healthcare providers.
-*   📊 **Real-time Status Tracking**: Live updates on booking approvals, caregiver arrivals, and service completion.
-*   ⚙️ **Admin Dashboard**: Comprehensive control center for user moderation, booking oversight, and platform analytics.
-*   📝 **Care Notes System**: Secure documentation of daily health vitals and care provided by the professional.
-*   🔔 **Notifications**: Real-time alerts for booking updates and critical messages.
+### 👤 User / Family
 
----
+- Secure JWT authentication
+- Elderly / patient profile management
+- Browse and filter caregivers
+- Book nursing services
+- Real-time booking lifecycle tracking
+- Live status updates via SSE
+- Submit caregiver ratings
 
-## 💻 Tech Stack
+### 🩺 Caregiver
 
-| Domain | Technologies |
-| :--- | :--- |
-| **Frontend** | React, Next.js, Tailwind CSS, TypeScript, Axios |
-| **Backend** | Node.js, Next.js API Routes, TypeScript |
-| **Database** | MongoDB, Mongoose |
-| **Authentication** | JSON Web Tokens (JWT), bcryptjs |
-| **Infrastructure** | _[Vercel (Frontend), Render/Railway (Backend)]_ |
+- Onboarding and profile setup
+- Availability and service area configuration
+- Accept or reject booking requests
+- Update service progress stages
+- Add care notes and updates
+- View work history and assignments
 
----
+### 🛡️ Admin
 
-## 🏗️ System Architecture Overview
+- Caregiver verification and onboarding
+- User and service management
+- Complaint handling and escalations
+- KPI monitoring and analytics
+- Role-based access control (RBAC)
 
-The application follows a modern **Client-Server architecture** with a clear separation of concerns:
-1.  **Client Layer (Next.js)**: Handles UI rendering, client-side routing, and state management. Communicates with the backend via RESTful APIs.
-2.  **API Layer (Next.js API Routes)**: Acts as the centralized gateway. It manages business logic, routing, authentication middleware, and input validation natively inside the backend app.
-3.  **Data Layer (MongoDB)**: A NoSQL database structured to efficiently manage complex, inter-relational data like Users, Bookings, Care Notes, and Reviews.
+***
 
----
+## 📸 Screenshots
 
-## 📂 Folder Structure
+<table>
+<tr>
+<td width="50%">
 
-```text
-elderly-nursing-healthcare-assistant-platform/
-├── frontend/                 # Next.js Client Application
-│   ├── public/               # Static assets (images, icons)
-│   ├── src/
-│   │   ├── app/              # Next.js App Router pages
-│   │   ├── components/       # Reusable React components (UI, Layouts)
-│   │   ├── hooks/            # Custom React hooks
-│   │   ├── lib/              # Utility functions, API clients
-│   │   ├── styles/           # Tailwind configuration and global CSS
-│   │   └── types/            # TypeScript interfaces
-│   ├── package.json
-│   └── tailwind.config.ts
-│
-├── backend/                  # Next.js API Route Server
-│   ├── src/
-│   │   ├── app/api/          # Next.js API routes (Endpoints)
-│   │   ├── config/           # Database and environment configurations
-│   │   ├── controllers/      # Request handlers & business logic
-│   │   ├── middleware/       # Custom middleware (Auth, Error handling)
-│   │   ├── models/           # Mongoose schemas (User, Booking, etc.)
-│   │   └── services/         # Business logic and database interaction
-│   └── package.json
-│
-└── README.md
-```
+### 🌐 Landing Page — `Public`
 
----
+<img src="assets/landing.png" alt="Landing Page" width="100%" />
 
-## 🔐 Environment Variables
+</td>
 
-Create `.env` files in both `frontend` and `backend` directories.
+<td width="50%">
 
-### Backend (`backend/.env`)
-| Variable | Description |
-| :--- | :--- |
-| `MONGODB_URI` | MongoDB connection string |
-| `JWT_SECRET` | Secret key for JWT signature |
-| `JWT_EXPIRES_IN` | Token expiration time (e.g., 7d) |
-| `ADMIN_EMAIL` | your_desired_admin_email |
-| `ADMIN_PASSWORD` | replace_with_a_strong_admin_password |
-| `MEDICAL_DATA_ENCRYPTION_KEY` | replace_with_a_base64_encoded_32_byte_key |
-| `FRONTEND_URL` | CORS allowed origin (e.g., http://localhost:3000) |
+### 🔐 Login — `Public`
 
+<img src="assets/login.png" alt="Login Page" width="100%" />
 
-### Frontend (`frontend/.env.local`)
-| Variable | Description |
-| :--- | :--- |
-| `NEXT_PUBLIC_API_URL` | Backend API Base URL |
+</td>
+</tr>
+
+<tr>
+<td width="50%">
+
+### 👤 User Dashboard — `User / Family`
+
+<img src="assets/user-dashboard.png" alt="User Dashboard" width="100%" />
+
+</td>
+
+<td width="50%">
+
+### 🩺 Caregiver Dashboard — `Caregiver`
+
+<img src="assets/caregiver-dashboard.png" alt="Caregiver Dashboard" width="100%" />
+
+</td>
+</tr>
+</table>
 
 ---
 
-## 🚀 Local Development Setup
+### 🛡️ Admin Dashboard — `Admin`
 
-Follow these steps to run the project locally.
+<p align="center">
+  <img src="assets/admin-dashboard.png" alt="Admin Dashboard" width="85%" />
+</p>
 
-### Prerequisites
-*   Node.js (v18 or higher)
-*   npm or yarn
-*   MongoDB instance (Local or Atlas)
+***
 
-### 1. Clone the repository
+## Quickstart
+
+**Prerequisites:** Node.js 20+, npm or pnpm, MongoDB (local or Atlas)
+
+### 01 — Clone and install dependencies
+
 ```bash
-git clone https://github.com/siddhantchasta/elderly-nursing-healthcare-assistant-platform.git
-cd elderly-nursing-healthcare-assistant-platform
+# Backend
+cd backend && npm install
+
+# Frontend
+cd ../frontend && npm install
 ```
 
-### 2. Backend Setup
+### 02 — Set up environment variables
+
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env.local
+# Then fill in the values for each file
+```
+
+### 03 — Start development servers
+
+```bash
+# Terminal A — Backend on port 3000
+cd backend && PORT=3000 npm run dev
+
+# Terminal B — Frontend on port 3001
+cd frontend && PORT=3001 npm run dev
+```
+
+### 04 — Seed initial data
+
 ```bash
 cd backend
-npm install
-# Set up your .env file
-npm run dev
+npm run seed:services
+npm run seed:admin
+# seed:admin requires ADMIN_EMAIL + ADMIN_PASSWORD in .env
 ```
-*The backend server should now be running on http://localhost:5000*
 
-### 3. Frontend Setup
-Open a new terminal window:
+***
+
+## Environment Variables
+
+### `backend/.env`
+
+| Variable | Description | Default |
+|---|---|---|
+| `MONGODB_URI` | MongoDB connection string | — |
+| `JWT_SECRET` | Secret used for JWT signing | — |
+| `JWT_EXPIRES_IN` | Token expiry duration | `7d` |
+| `MEDICAL_DATA_ENCRYPTION_KEY` | Base64 encoded 32-byte AES-256-GCM key | — |
+| `FRONTEND_URL` | Allowed frontend origins for CORS | — |
+| `ADMIN_EMAIL` | Admin bootstrap email (seed:admin) | — |
+| `ADMIN_PASSWORD` | Admin bootstrap password (seed:admin) | — |
+
+### `frontend/.env.local`
+
+| Variable | Description | Default |
+|---|---|---|
+| `NEXT_PUBLIC_API_BASE_URL` | Backend API base URL | `http://localhost:3000` |
+
+> ⚠️ **Never commit:** `JWT_SECRET` · `MEDICAL_DATA_ENCRYPTION_KEY` · Admin credentials · Production database URLs.
+> Use a secure secrets manager (Doppler, Vault, etc.) in production environments.
+
+***
+
+## API Documentation
+
+The backend ships a complete OpenAPI 3.0 specification at `backend/openapi.yaml`, covering all REST modules.
+
+**Modules covered:**
+
+- JWT Authentication
+- Booking Lifecycle
+- Caregiver Onboarding
+- Complaint Workflows
+- SSE Notifications
+- Admin Analytics
+- Patient Profiles
+- Medical Data
+- Services Catalog
+
+### Run Swagger UI locally
+
 ```bash
-cd frontend
-npm install
-# Set up your .env.local file
-npm run dev
+cd backend
+npm install swagger-ui-express yamljs
 ```
-*The frontend application should now be running on http://localhost:3000*
 
----
+```typescript
+import swaggerUi from "swagger-ui-express";
+import YAML from "yamljs";
 
-## 🔮 Future Enhancements
+const swaggerDocument = YAML.load("./openapi.yaml");
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+```
 
-*   **Video Consultations**: Integrated WebRTC for preliminary virtual check-ins.
-*   **Payment Gateway Integration**: Stripe integration for seamless, secure transactions and caregiver payouts.
-*   **AI Chatbot Assistant**: 24/7 automated support for basic medical queries and booking assistance.
-*   **Medication Reminders**: Push notification system for patient medication schedules.
+Then open `http://localhost:3000/docs`. The spec can also be imported into Postman, Insomnia, Swagger Editor, Redocly, or OpenAPI Generator.
 
----
+***
 
-<div align="center">
-  <p>Built with ❤️ by an Open-Source Engineer</p>
-</div>
+## Architecture
+
+### System Diagram
+
+> A high-level view of the full-stack request lifecycle, from the frontend down to MongoDB.
+
+![Archiecture](assets/architecture.png)
+
+### Auth Sequence
+
+> JWT-based authentication flow — from login request to protected route access.
+
+![Auth Sequence](assets/auth-sequence.png)
+
+**Design highlights:**
+
+- Modular API route organization by domain
+- Role-based access control (RBAC) at middleware level
+- AES-256-GCM encryption for medical data at rest
+- Real-time updates via Server-Sent Events (SSE)
+- Centralized API response structure
+- Environment-driven configuration, no hardcoded secrets
+
+***
+
+## Security
+
+| Primitive | Details |
+|---|---|
+| **JWT Authentication** | Stateless token-based auth with configurable expiry and protected route middleware |
+| **bcrypt Password Hashing** | Salted hashing via bcryptjs. No plain-text passwords stored or logged anywhere |
+| **AES-256-GCM Encryption** | Sensitive medical data encrypted at rest with a 32-byte base64-encoded key |
+| **RBAC Authorization** | Admin-only actions are guarded at the middleware level, not just the UI layer |
+| **Admin Bootstrapping** | Idempotent `seed:admin` script prevents accidental privilege escalation on re-runs |
+| **SSE Stream Protection** | Notification streams require valid JWT. Heartbeat keeps connections alive on proxies |
+
+***
+
+## Project Structure
+
+```
+backend/
+  scripts/              seed:services, seed:admin
+  src/
+    app/api/
+      auth/             POST /login, /register
+      bookings/         Booking lifecycle + ratings
+      caregivers/       Profile, work-history, availability
+      complaints/       Raise + resolve complaints
+      notifications/    SSE stream + status-updates
+      patients/         Patient profile management
+      services/         Healthcare services catalog
+      admin/            Users, caregivers, analytics, reports
+    controllers/        HTTP request / response handlers
+    models/             Mongoose schemas
+    services/           Business logic
+    lib/                MongoDB connection, encryption utils
+    middleware/         Auth, RBAC, error handling
+
+frontend/
+  src/app/
+    admin/              Admin portal pages
+    caregiver/          Caregiver portal pages
+    user/               User / family portal pages
+    login/              Auth screens
+    register/
+  src/components/       Shared UI components
+  src/lib/              API client, utilities
+  src/types/            TypeScript type definitions
+
+backend/openapi.yaml    Full OpenAPI 3.0 specification
+```
+
+***
+
+## Operational Notes
+
+> **Important things to know before deploying:**
+
+- `MEDICAL_DATA_ENCRYPTION_KEY` must be a valid base64-encoded 32-byte key — generate with `openssl rand -base64 32`
+- SSE streams require response buffering to be disabled on reverse proxies (Nginx: `proxy_buffering off`)
+- `seed:admin` is idempotent — safe to re-run, it will not create duplicate admins
+- Frontend and backend must run on separate ports; configure `FRONTEND_URL` correctly for CORS
+
+The backend connects to a MongoDB database named `elderly_nursing_platform` via the connection utility at `backend/src/lib/mongodb.ts`.
+
+***
+
+## Future Roadmap
+
+- Online payments & insurance integrations
+- Native mobile applications (React Native)
+- Tele-consultation with doctors
+- Medication reminder system
+- Emergency SOS workflows
+- AI-powered caregiver recommendations
+- Advanced analytics dashboards
+- Multi-language / accessibility improvements
+
+***
+
+*Built for educational & portfolio purposes · MERN Stack · Next.js · TypeScript · OpenAPI 3.0*
